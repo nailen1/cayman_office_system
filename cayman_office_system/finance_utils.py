@@ -50,7 +50,6 @@ def format_number(number):
 
 
 def get_last_day_of_month(date_str):
-    # 입력 형식 감지
     if '-' in date_str:
         date_format = "%Y-%m-%d"
         output_format = "%Y-%m-%d"
@@ -58,21 +57,8 @@ def get_last_day_of_month(date_str):
         date_format = "%Y%m%d"
         output_format = "%Y%m%d"
     
-    # 문자열을 datetime 객체로 변환
-    date_obj = datetime.strptime(date_str, date_format)
-    
-    # 해당 월의 마지막 날 계산
+    date_obj = datetime.strptime(date_str, date_format)    
     last_day = calendar.monthrange(date_obj.year, date_obj.month)[1]
-    
-    # 마지막 날의 날짜 객체 생성
     last_date_obj = datetime(date_obj.year, date_obj.month, last_day)
     
-    # 지정된 형식으로 변환하여 반환
     return last_date_obj.strftime(output_format)
-
-# 예제 사용
-date_str1 = '20231015'
-print(get_last_day_of_month(date_str1))  # 출력: 20231031
-
-date_str2 = '2023-10-15'
-print(get_last_day_of_month(date_str2))  # 출력: 2023-10-31
