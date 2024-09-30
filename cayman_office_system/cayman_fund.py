@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from shining_pebbles import get_today
+from shining_pebbles import get_today, get_date_range
 from .dataset_constants import *
 from .dataset_loader import *
 from .holdings import Holdings
@@ -50,6 +50,8 @@ class CaymanFund:
         frame = self.frame
         amounts = self.trades.timeseries_amount
         df = frame.merge(amounts[['amount_order']], how='outer', left_index=True, right_index=True)
+        all_dates = get_date_range(self.initial_date, get_today())
+        df = df.reindex(all_dates)
         df['initial_balance_usd'] = df['initial_balance_usd'].ffill()
         df['amount_order'] = df['amount_order'].fillna(0)
         df['usdkrw'] = df.index.map(get_usdkrw_of_date)

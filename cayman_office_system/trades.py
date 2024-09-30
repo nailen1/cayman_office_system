@@ -1,5 +1,5 @@
 import pandas as pd
-from shining_pebbles import get_today
+from shining_pebbles import get_today, get_date_range
 from .trade_utils import get_dates_of_trades_in_file_folder
 from .trade_parser import Trade
 from .birdeye_connector import get_price_of_date_by_ticker
@@ -70,10 +70,15 @@ class Trades:
         return df
     
     def get_timeseries_of_evaluation(self):
-        trades = self.trades
-        dfs = [trade.timeseries.iloc[:, -2:-1] for trade in trades]
+        trade_objs = self.trades
+        dfs = [trade.timeseries.iloc[:, -2:-1] for trade in trade_objs]
         df = pd.concat(dfs, axis=1)
         df = df.fillna(0)
+        all_dates = get_date_range(self.dates[0], get_today())
+        df = df.reindex(all_dates)
+        df = df.ffill()
+        df = df.fillna(0)
+
         df['total_evaluation'] = df.sum(axis=1)
         self.timeseries_evaluation = df
         return df
