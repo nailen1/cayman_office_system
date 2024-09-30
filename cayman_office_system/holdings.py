@@ -1,5 +1,6 @@
 from .trade_parser import *
 from .trades import Trades
+from .market_information import get_ks_equity_info
 
 class Holdings:
     def __init__(self, start_date=None, end_date=None):
@@ -7,6 +8,8 @@ class Holdings:
         self.raw = self.get_raw()
         self.list = self.get_list()
         self.pl = self.get_pl()
+        self.tickers = list(self.list.index)
+        self.equities = get_ks_equity_info(self.tickers)
 
     def get_raw(self):
         trades = self.trades

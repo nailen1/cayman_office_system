@@ -22,8 +22,9 @@ class Account:
         self.cash = self.get_timeseries_cash()
         self.stock = self.get_timeseries_stock()
         self.nav = self.get_timeseries_nav()
-        self.weights = self.get_weights()
+        self.df = self.get_df()
         self.latest = self.get_latest_info()
+        self.df_pl, self.df_weights = self.get_pl_and_weights()
 
     def open_raw_balance(self):
         df = open_balance_of_month(month=self.month, file_folder=self.file_folder)
@@ -100,14 +101,16 @@ class Account:
         df['nav_krw'] = df['cash_krw'] + df['stock_krw']
         df['weight_cash'] = 100 * df['cash_usd'] / df['nav_usd']
         df['weight_stock'] = 100 * df['stock_usd'] / df['nav_usd']
+        self.nav = df
         if isinstance(currency, str) and currency.upper() == 'USD':
             df = df.filter(regex='^(?!.*_krw)')
+            self.nav_usd = df
         elif isinstance(currency, str) and currency.upper() == 'KRW':
             df = df.filter(regex='^(?!.*_usd)')
-        self.nav = df
+            self.nav_krw = df
         return df
 
-    def get_weights(self):
+    def get_df(self):
         if not hasattr(self, 'holdings'):
             self.import_holdings(self.date)
         holdings = self.holdings
@@ -116,14 +119,14 @@ class Account:
         df['weight'] = 100 * df['evaluation'] / nav_krw_latest
         df['attribution'] = df['return'] * df['weight'] / 100
         df = df.sort_values('weight', ascending=False)
-        self.weights = df
+        self.df = df
         return df
     
     def get_latest_info(self):
         srs_latest = self.nav.iloc[-1].copy()
-        if not hasattr(self, 'weights'):
-            self.get_weights()
-        df = self.weights
+        if not hasattr(self, 'df'):
+            self.get_df()
+        df = self.df
         total_net_amount = df['net_amount'].sum()
         total_evaluation = df['evaluation'].sum()
         total_pl = df['pl'].sum()
@@ -143,27 +146,26 @@ class Account:
         self.df_latest = df
         return df
         
-    def get_dfs_concise(self):
-        if not hasattr(self, 'weights'):
-            self.get_weights()
-        df_weights = self.weights
-        df_absolutes = get_df_absolutes(df_weights)
-        df_portions = get_df_portions(df_weights)
-        dfs = {'absolutes': df_absolutes, 'portions': df_portions}
-        self.dfs = dfs
-        return dfs
+    def get_pl_and_weights(self):
+        if not hasattr(self, 'df'):
+            self.get_df()
+        df = self.df
+        df_pl = get_df_pl(df)
+        df_weights = get_df_weights(df)
+        self.df_pl = df_pl
+        self.df_weights = df_weights
+        return df_pl, df_weights
 
 
-def get_df_absolutes(df_weights): 
-    cols_absolutes = ['name', 'num_shares', 'price_last', 'evaluation', 'pl']
-    df = df_weights[cols_absolutes]
-    return df
+def get_df_pl(df): 
+    cols_pl = ['name', 'num_shares', 'price_average', 'price_last', 'evaluation', 'pl']
+    df_pl = df[cols_pl]
+    return df_pl
 
-def get_df_portions(df_weights):
-    cols_portions = ['name', 'return', 'weight', 'attribution']
-    df = df_weights[cols_portions]
-    return df
-
+def get_df_weights(df):
+    cols_weights = ['name', 'return', 'weight', 'attribution']
+    df_weights = df[cols_weights]
+    return df_weights
 
 
 
