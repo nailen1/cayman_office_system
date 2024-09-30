@@ -8,7 +8,7 @@ from .finance_utils import get_last_day_of_month
 from .market_information import get_ks_equity_info
     
 class CaymanFund:
-    def __init__(self, date=None):
+    def __init__(self, trades, date=None):
         self.fund_name = 'LIFE KOREA ENGAGEMENT FUND'
         self.fund_code = 'LKEF'
         self.date = date or get_today()
@@ -17,10 +17,10 @@ class CaymanFund:
         self.raw = self.open_raw_balance()
         self.initial = self.get_initial_data_of_month()
         self.frame = self.get_frame()
-        self.holdings = self.import_holdings(self.date)
+        self.trades = trades
+        self.holdings = Holdings(trades=trades)
         self.tickers = self.holdings.tickers
         self.equities = get_ks_equity_info(self.tickers)
-        self.trades = self.import_trades()
 
     def open_raw_balance(self):
         df = open_balance_of_month(month=self.month, file_folder=self.file_folder)
@@ -46,20 +46,6 @@ class CaymanFund:
         self.frame = frame
         return frame
     
-    def import_holdings(self, date):
-        end_date = get_last_day_of_month(date)
-        holdings = Holdings(end_date=end_date)
-        self.holdings = holdings
-        return holdings
-    
-    def import_trades(self):
-        if not hasattr(self, 'holdings'):
-            self.import_holdings(self.date)
-        holdings = self.holdings
-        trades = holdings.trades
-        self.trades = trades
-        return trades
-    
     def get_timeseries_cash(self):
         frame = self.frame
         amounts = self.trades.timeseries_amount
@@ -82,13 +68,17 @@ class CaymanFund:
         df['stock_usd'] = df['stock_krw'] / df['usdkrw']
         cols_to_keep = ['stock_usd', 'stock_krw']
         df = df[cols_to_keep]
-        self.evaluation = df
+        self.stock = df
         return df
     
     def get_timeseries(self, currency=None):
+        if not hasattr(self, 'cash'):
+            self.get_timeseries_cash()
         cash = self.cash
-        eval = self.evaluation
-        df = cash.merge(eval, how='outer', right_index=True, left_index=True)
+        if not hasattr(self, 'stock'):
+            self.get_timeseries_stock()
+        stock = self.stock
+        df = cash.merge(stock, how='outer', right_index=True, left_index=True)
         df['cash_usd'] = df['cash_usd'].ffill()
         df['cash_krw'] = df['cash_krw'].ffill()
         df['stock_usd'] = df['stock_usd'].fillna(0)
@@ -100,7 +90,12 @@ class CaymanFund:
         df['weight_cash_krw'] = 100 * df['cash_krw'] / df['nav_krw']
         df['weight_stock_krw'] = 100 * df['stock_krw'] / df['nav_krw']
         self.timeseries = df
-        if isinstance(currency, str) and currency.upper() == 'USD':
+        if isinstance(currency, str) and currency.upper() == 'ALL':
+            df_usd = df.filter(regex='^(?!.*_krw)')
+            self.timeseries_usd = df_usd
+            df_krw = df.filter(regex='^(?!.*_usd)')
+            self.timeseries_krw = df_krw
+        elif isinstance(currency, str) and currency.upper() == 'USD':
             df = df.filter(regex='^(?!.*_krw)')
             self.timeseries_usd = df
         elif isinstance(currency, str) and currency.upper() == 'KRW':
@@ -122,7 +117,12 @@ class CaymanFund:
         cols_orderd = ['nav_krw', 'nav_usd', 'price_krw', 'price_usd', 'return_krw', 'return_usd', 'cumreturn_krw', 'cumreturn_usd']
         df_nav = df_nav[cols_orderd]
         self.nav = df_nav
-        if isinstance(currency, str) and currency.upper() == 'USD':
+        if isinstance(currency, str) and currency.upper() == 'ALL':
+            df_nav_usd = df_nav.filter(regex='^(?!.*_krw)')
+            self.nav_usd = df_nav_usd
+            df_nav_krw = df_nav.filter(regex='^(?!.*_usd)')
+            self.nav_krw = df_nav_krw
+        elif isinstance(currency, str) and currency.upper() == 'USD':
             df_nav = df_nav.filter(regex='^(?!.*_krw)')
             self.nav_usd = df_nav
         elif isinstance(currency, str) and currency.upper() == 'KRW':

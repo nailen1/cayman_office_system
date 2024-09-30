@@ -3,13 +3,19 @@ from .trades import Trades
 from .market_information import get_ks_equity_info
 
 class Holdings:
-    def __init__(self, start_date=None, end_date=None):
-        self.trades = Trades(start_date=start_date, end_date=end_date)
+    def __init__(self, trades=None):
+        self.trades = self.set_trades(trades)
         self.raw = self.get_raw()
         self.list = self.get_list()
         self.pl = self.get_pl()
         self.tickers = list(self.list.index)
         self.equities = get_ks_equity_info(self.tickers)
+
+    def set_trades(self, trades=None):
+        if trades is None:
+            trades = Trades()
+        self.trades = trades
+        return trades
 
     def get_raw(self):
         trades = self.trades
