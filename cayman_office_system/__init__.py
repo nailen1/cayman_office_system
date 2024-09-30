@@ -9,4 +9,5 @@ from .trade_parser import *
 from .trades import *
 from .holdings import *
 from .account import *
+from .cayman_fund import *
 

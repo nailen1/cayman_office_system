@@ -7,7 +7,7 @@ from .holdings import Holdings
 from .finance_utils import get_last_day_of_month
 from .market_information import get_ks_equity_info
     
-class Account:
+class CaymanFund:
     def __init__(self, date=None):
         self.fund_name = 'LIFE KOREA ENGAGEMENT FUND'
         self.fund_code = 'LKEF'
@@ -21,13 +21,6 @@ class Account:
         self.tickers = self.holdings.tickers
         self.equities = get_ks_equity_info(self.tickers)
         self.trades = self.import_trades()
-        self.cash = self.get_timeseries_cash()
-        self.stock = self.get_timeseries_stock()
-        self.timeseries = self.get_timeseries()
-        self.nav = self.get_timeseries_nav()
-        self.df = self.get_df()
-        self.latest = self.get_latest_info()
-        self.pl, self.weights = self.get_pl_and_weights()
 
     def open_raw_balance(self):
         df = open_balance_of_month(month=self.month, file_folder=self.file_folder)
@@ -119,7 +112,7 @@ class Account:
         if not hasattr(self, 'timeseries'):
             self.get_timeseries()
         df = self.timeseries
-        df_nav = df[['nav_krw', 'nav_usd']]
+        df_nav = df[['nav_krw', 'nav_usd']].copy()
         df_nav['price_krw'] = (df_nav['nav_krw'] / df_nav['nav_krw'].iloc[0])*1000
         df_nav['return_krw'] = df_nav['price_krw'].pct_change().fillna(0) * 100
         df_nav['cumreturn_krw'] = (df_nav['price_krw']/df_nav['price_krw'].iloc[0] - 1)*100

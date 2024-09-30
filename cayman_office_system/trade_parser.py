@@ -1,6 +1,7 @@
 from .dataset_constants import file_folder
 from .trade_utils import *
 from .birdeye_connector import get_df_timeseries_by_ticker
+from .market_information import get_ks_market_info
 from .cayman_office_system import *
 import pandas as pd
 
@@ -34,7 +35,7 @@ class Trade:
             dates = get_dates_of_trades_in_file_folder(file_folder=self.file_folder, form='%Y-%m-%d')
             self.date = dates[self.index]
 
-        print(f'- set (date, index) = ({self.date}, {self.index})')
+        print(f'- import trade of (date, index) = ({self.date}, {self.index})')
         return self
 
     def open_raw(self):
@@ -107,8 +108,9 @@ class Transaction:
         self.raw = raw
         self.date = date
         self.data_raw = self.get_data()
-        self.get_properties()
+        self.data_in_transaction = self.get_properties()
         self.ticker = self.get_ticker()
+        self.name_bbg = self.get_name_bbg()
         self.df = self.get_df()
         self.data = self.get_data_calculated()
         
@@ -130,13 +132,32 @@ class Transaction:
         self.net_amount = get_net_amount_in_transaction(data)
         self.num_shares = get_total_no_of_shares_in_transaction(data)
         self.average_price = get_average_price_in_transaction(data)
-        return self
+        self.data_in_transaction = {
+            'type': self.type,
+            'name': self.name,
+            'isin_code': self.isin_code,
+            'abbr_code': self.abbr_code,
+            'consideration': self.consideration,
+            'commission': self.commission,
+            'sales_tax': self.sales_tax,
+            'capital_gain_tax': self.capital_gain_tax,
+            'net_amount': self.net_amount,
+            'num_shares': self.num_shares,
+            'average_price': self.average_price
+        }
+        return self.data_in_transaction
     
     def get_ticker(self):
         ticker = get_ticker_in_transaction(self.data_raw)
         self.ticker = ticker
         return ticker
     
+    def get_name_bbg(self):
+        ks = get_ks_market_info()
+        name_bbg = ks.loc[f'{self.ticker} Equity']['name']
+        self.name_bbg = name_bbg
+        return name_bbg
+
     def get_df(self):
         df = get_df_sellbuy(self.raw)
         df['date'] = self.date
