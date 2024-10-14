@@ -1,6 +1,7 @@
 from  shining_pebbles import get_today
 from .dataset_loader import get_df_sector_ks
 from .birdeye_connector import get_df_prices_of_ks_stock
+from .finance_utils import get_ticker_from_ticker_bbg
 
 
 class MarketInfo:
@@ -52,3 +53,10 @@ def get_ks_equity_info(tickers):
     df = ks[ks.index.isin(tickers_bbg)]
     df.columns.name = get_today()
     return df
+
+def get_stock_info_to_order():
+    stock_info = get_ks_market_info()
+    stock_info['ticker'] = stock_info.index.map(get_ticker_from_ticker_bbg)
+    stock_info = stock_info.fillna('-')
+    return stock_info
+

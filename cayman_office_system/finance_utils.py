@@ -6,6 +6,8 @@ import calendar
 def get_ticker_bbg_of_ticker(ticker):
     return f"{ticker} KS Equity".replace(' KS KS', ' KS')
 
+def get_ticker_from_ticker_bbg(ticker_bbg):
+    return ticker_bbg.replace(' Equity', '')
 
 def convert_to_unit(number, currency='KRW', level=None):
     if pd.isna(number) or number == "NaN":

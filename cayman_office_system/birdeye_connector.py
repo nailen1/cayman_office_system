@@ -2,6 +2,7 @@ import mysql.connector
 import os
 from dotenv import load_dotenv
 import pandas as pd
+from datetime import datetime
 
 load_dotenv()
 
@@ -34,7 +35,15 @@ def get_data_of_ks_stock(cols):
     query = f"SELECT {', '.join(cols)} FROM ks_stocks"
     cursor.execute(query)
     data = cursor.fetchall()
+    hotfix_data = import_hotfix_data_of_ks_stock()
+    data = data + hotfix_data
     return data
+
+def import_hotfix_data_of_ks_stock():
+    hotfix_data = [
+        ('282690', '동아타이어', 13500, 1853),
+    ]
+    return hotfix_data
 
 def preprocess_df_from_price_data(data):
     df = pd.DataFrame(data, columns=COLUMNS_FOR_PRICE)
@@ -52,9 +61,12 @@ def get_data_of_timeseries_by_ticker(ticker, cols):
     connection = mysql.connector.connect(user=user, password=password, host=host, database=database)
     cursor = connection.cursor()
     ticker = ticker[:6]
-    query = f"SELECT {', '.join(cols)} FROM p_ks_{ticker}"
-    cursor.execute(query)
-    data = cursor.fetchall()
+    try:
+        query = f"SELECT {', '.join(cols)} FROM p_ks_{ticker}"
+        cursor.execute(query)
+        data = cursor.fetchall()
+    except:
+        data = None
     return data
 
 def preprocess_df_from_timeseries_data(data):
@@ -83,8 +95,19 @@ def get_price_of_date_by_ticker(ticker, date):
     connection = mysql.connector.connect(user=user, password=password, host=host, database=database)
     cursor = connection.cursor()
     ticker = ticker[:6]
-    query = f"SELECT dt, pr1 FROM p_ks_{ticker} WHERE dt = '{date}'"
-    cursor.execute(query)
-    data = cursor.fetchall()
-    price_of_date = data[-1][-1]
+    try:
+        query = f"SELECT dt, pr1 FROM p_ks_{ticker} WHERE dt = '{date}'"
+        cursor.execute(query)
+        data = cursor.fetchall()
+        price_of_date = data[-1][-1]
+    except:
+        data = import_hotfix_constant_data_price_of_date_by_ticker(ticker, date)
+        price_of_date = data[-1][-1]
     return price_of_date
+
+def import_hotfix_constant_data_price_of_date_by_ticker(ticker, date):
+    date = datetime.strptime(date, "%Y-%m-%d").date()
+    mapping_hotfix_price = {'282690': 13500}
+    price_of_date = mapping_hotfix_price[ticker]
+    data = [(date, price_of_date)]
+    return data
