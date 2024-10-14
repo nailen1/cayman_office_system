@@ -107,7 +107,7 @@ class CaymanFund:
     
     def get_timeseries_nav(self, currency=None):
         if not hasattr(self, 'timeseries'):
-            self.get_timeseries()
+            self.get_timeseries(currency=currency)
         df = self.timeseries
         df_nav = df[['nav_krw', 'nav_usd']].copy()
         df_nav['price_krw'] = (df_nav['nav_krw'] / df_nav['nav_krw'].iloc[0])*1000
@@ -145,9 +145,13 @@ class CaymanFund:
         return df
     
     def get_latest_info(self):
+        if not hasattr(self, 'nav'):
+            self.get_timeseries_nav()
         row_nav = self.nav.iloc[-1:, :].reset_index()
         nav_latest_krw = row_nav.filter(regex='^(?!.*_usd)').to_dict(orient='records')[0]
         nav_latest_usd = row_nav.filter(regex='^(?!.*_krw)').to_dict(orient='records')[0]
+        if not hasattr(self, 'timeseries'):
+            self.get_timeseries()
         row_ts = self.timeseries.iloc[-1:, :]
         ts_latest_krw = row_ts.filter(regex='^(?!.*_usd)').to_dict(orient='records')[0]
         ts_latest_usd = row_ts.filter(regex='^(?!.*_krw)').to_dict(orient='records')[0]
