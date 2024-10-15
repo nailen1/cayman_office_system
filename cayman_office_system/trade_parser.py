@@ -14,10 +14,10 @@ class Trade:
         self.set_date_and_index(date, index)
         self.raw = self.open_raw()
         self.transactions = self.get_transactions()
-        self.df = self.show_info()
+        self.df = self.get_df()
         self.data = self.get_data()
         self.timeseries = self.get_timeseries_of_trade_since_trade()
-        self.amount = {'date': self.date, 'amount_order': self.net_amount}
+        self.cash_flow = {'date': self.date, 'cash_flow': self.cash_folw}
 
 
     def set_date_and_index(self, date, index):
@@ -35,7 +35,7 @@ class Trade:
             dates = get_dates_of_trades_in_file_folder(file_folder=self.file_folder, form='%Y-%m-%d')
             self.date = dates[self.index]
 
-        print(f'- import trade of (date, index) = ({self.date}, {self.index})')
+        print(f'| import trade of (date, index) = ({self.date}, {self.index})')
         return self
 
     def open_raw(self):
@@ -66,22 +66,25 @@ class Trade:
         self.transactions = transactions
         return transactions
     
-    def show_info(self):
+    def get_df(self):
         trxs = self.transactions
         data = [trx.data for trx in trxs]
         df = pd.DataFrame(data)
+        df['delta_shares'] = df.apply(lambda row: int(row['num_shares']) if row['type'] == 'Buy' else int(-row['num_shares']), axis=1)
+        df['cash_flow'] = df.apply(lambda row: -row['net_amount'] if row['type'] == 'Buy' else row['net_amount'], axis=1)
         self.tickers = list(df['ticker'])
         self.names = list(df['name'])
         self.net_amount = df['net_amount'].sum()
-        self.info = df
-        print(f'- net_amount: {self.net_amount}')
+        self.cash_folw = df['cash_flow'].sum()
+        # self.df = df
+        print(f'|- cash flow of trade: {self.cash_folw}')
         return df
     
     def get_data(self):
-        if not hasattr(self, 'info'):
-            self.show_info()
-        df= self.info
-        data = df[['date', 'ticker', 'num_shares']].to_dict(orient='records')
+        if not hasattr(self, 'df'):
+            self.get_df()
+        df= self.df
+        data = df[['date', 'ticker', 'type', 'num_shares', 'delta_shares']].to_dict(orient='records')
         self.data = data
         return data
     
@@ -107,14 +110,14 @@ class Transaction:
     def __init__(self, raw, date):
         self.raw = raw
         self.date = date
-        self.data_raw = self.get_data()
+        self.data_raw = self.get_data_raw()
         self.data_in_transaction = self.get_properties()
         self.ticker = self.get_ticker()
         self.name_bbg = self.get_name_bbg()
         self.df = self.get_df()
         self.data = self.get_data_calculated()
         
-    def get_data(self):
+    def get_data_raw(self):
         data_raw = get_data_in_transaction(self.raw, KEYS_TRANSACTION)
         self.data_raw = data_raw
         return data_raw
@@ -223,7 +226,7 @@ class Transaction:
             'average_price': self.average_price_calculated,
             'consideration': self.consideration_calculated,
             'commission': self.commission_calculated,
-            'net_amount': self.net_amount_calculated
+            'net_amount': self.net_amount_calculated,
         }
         self.data = data
         return data
@@ -261,9 +264,10 @@ class Transaction:
 def get_df_timeseries_of_a_ticker_in_a_trade(trade_data):
     date = trade_data['date']
     ticker = trade_data['ticker']
-    num_shares = trade_data['num_shares']
+    # num_shares = trade_data['num_shares']
+    delta_shares = trade_data['delta_shares']
     df = get_df_timeseries_by_ticker(ticker=ticker)
     df = df[df.index >= date]
-    df['num_shares'] = num_shares
-    df[f'{ticker}: ({date}, {num_shares})'] = df['price_last'] * df['num_shares']
+    df['delta_shares'] = delta_shares
+    df[f'{ticker}: ({date}, {delta_shares})'] = df['price_last'] * df['delta_shares']
     return df

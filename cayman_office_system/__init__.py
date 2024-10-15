@@ -10,4 +10,6 @@ from .trades import *
 from .holdings import *
 from .account import *
 from .cayman_fund import *
+from .trade_synthetic import *
+from .trades_synthetic import *
 

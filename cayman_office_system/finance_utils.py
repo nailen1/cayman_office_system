@@ -50,6 +50,9 @@ def convert_to_unit(number, currency='KRW', level=None):
 def format_number(number):
     return f"{number:,}"
 
+def format_integer(number):
+    return int(number) if not pd.isna(number) else number
+
 
 def get_last_day_of_month(date_str):
     if '-' in date_str:

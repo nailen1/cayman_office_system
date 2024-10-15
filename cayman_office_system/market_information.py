@@ -1,7 +1,7 @@
 from  shining_pebbles import get_today
 from .dataset_loader import get_df_sector_ks
 from .birdeye_connector import get_df_prices_of_ks_stock
-from .finance_utils import get_ticker_from_ticker_bbg
+from .finance_utils import get_ticker_from_ticker_bbg, get_ticker_bbg_of_ticker
 
 
 class MarketInfo:
@@ -34,12 +34,25 @@ class MarketInfo:
         self.info = info
         return info
 
+    def get_mapping_name(self):
+        self.mapping_name = self.sector['name'].to_dict()
+        return self.mapping_name
+    
+    def get_mapping_sector(self):
+        self.mapping_sector = self.sector['sector'].to_dict()
+        return self.mapping_sector
+    
+
+def get_mapping_ks_name():
+    name_sector = get_df_sector_ks()
+    return name_sector['name'].to_dict()
+
+def get_mapping_ks_sector():
+    name_sector = get_df_sector_ks()
+    return name_sector['sector'].to_dict()
 
 def get_ks_market_info():
     return MarketInfo(name='ks').info
-
-def get_ticker_bbg_of_ticker(ticker):
-    return f"{ticker} KS Equity".replace(' KS KS', ' KS')
 
 def append_market_info_to_df(df):
     df['ticker_bbg'] = df['ticker'].map(lambda x: get_ticker_bbg_of_ticker(x))
