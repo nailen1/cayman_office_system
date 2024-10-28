@@ -28,7 +28,7 @@ DNDONGA_MERGER = [SELL_DN, SELL_DONGATIRE, BUY_DN]
 
 # ['date', 'name', 'ticker', 'type', 'num_shares', 'average_price',
 #        'consideration', 'commission', 'net_amount', 'delta_shares',
-#        'cash_flow']
+#        'cashflow']
 
 # {'date': '2024-10-07',
 #  'name': 'DN AUTOMOTIVE CORP',

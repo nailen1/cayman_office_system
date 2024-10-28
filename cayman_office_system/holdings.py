@@ -1,14 +1,13 @@
 from .trade_parser import *
 from .trades import Trades
-from .market_information import get_ks_equity_info
+from .finance_utils import *
+from .market_information import get_ks_equity_info, get_mapping_ks_name
 
 class Holdings:
     def __init__(self, trades=None):
         self.trades = self.set_trades(trades)
-        self.raw = self.get_raw()
-        self.list = self.get_list()
-        self.pl = self.get_pl()
-        self.tickers = list(self.list.index)
+        self._raw = self.get_raw()
+        self.df = self.get_df()
         self.equities = get_ks_equity_info(self.tickers)
 
     def set_trades(self, trades=None):
@@ -18,32 +17,31 @@ class Holdings:
         return trades
 
     def get_raw(self):
-        trades = self.trades
-        df = trades.pl
-        names = df[['ticker', 'name']].set_index('ticker').drop_duplicates()
-        cols_to_keep = ['ticker', 'num_shares', 'net_amount', 'evaluation', 'pl']
-        df = df[cols_to_keep]
+        buys = self.trades.buys[['ticker', 'delta_shares', 'net_amount', 'valuation']]
+        buys.columns = ['ticker', 'delta_shares', 'action', 'stock']
+        sells = self.trades.sells[['ticker', 'delta_shares', 'valuation', 'realization']]
+        sells.columns = ['ticker', 'delta_shares', 'action', 'stock']
+        sells.loc[:, 'action'] = -sells['action']
+        sells.loc[:, 'stock'] = -sells['stock']    
+        df = pd.concat([buys, sells], axis=0)
+        self._raw = df
+        return df
+    
+    def get_df(self):
+        df = self._raw
         df = df.groupby('ticker').sum()
-        df['price_average'] = df['net_amount'] / df['num_shares']
-        df['price_last'] = df['evaluation'] / df['num_shares']
-        df['return'] = (df['evaluation'] / df['net_amount'] - 1)*100
-        df = df.merge(names, how='left', left_index=True, right_index=True)
-        self.raw = df
-        return df
-    
-    def get_list(self):
-        df = self.raw
-        cols_to_keep = ['name', 'num_shares', 'net_amount', 'evaluation', 'pl', 'return']
+        df = df[df['delta_shares'] != 0]
+        df['price_average'] = df['action'] / df['delta_shares']
+        df['price_last'] = df['stock'] / df['delta_shares']
+        df['ticker_bbg'] = df.index.map(get_ticker_bbg_of_ticker)
+        df['name'] = df['ticker_bbg'].map(get_mapping_ks_name())
+        cols_to_keep = ['name', 'delta_shares', 'price_average', 'price_last', 'action', 'stock']
         df = df[cols_to_keep]
-        df = df.sort_values('evaluation', ascending=False)
-        self.list = df
-        self.tickers = list(df.index)
-        self.names = list(df['name'])
-        return df
-    
-    def get_pl(self):
-        df = self.raw
-        cols_to_keep = ['name', 'num_shares', 'net_amount', 'evaluation', 'pl', 'price_average', 'price_last', 'return']
-        df = df[cols_to_keep]
-        self.pl = df
+        df['pl'] = df['stock'] - df['action']
+        df['return'] = df['pl'] / df['action'] * 100
+        df = df.rename(columns={'delta_shares': 'num_shares', 'action': 'total_amount', 'stock': 'total_valuation'})
+        df = df.sort_values('total_valuation', ascending=False)
+        self.tickers = df(df.index)
+        self.names = df(df['name'])
+        self.df = df
         return df

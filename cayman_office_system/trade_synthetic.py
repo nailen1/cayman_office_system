@@ -23,7 +23,7 @@ class SyntheticTrade:
                 setattr(self, key, value)
 
         self.df = self.get_df_synthetic_trade()
-        self.cash_flow = {'date': self.date, 'cash_flow': self.cash_folw}
+        self.cashflow = {'date': self.date, 'cashflow': self.cash_folw}
 
 
     def get_df_synthetic_trade(self):
@@ -39,7 +39,7 @@ class SyntheticTrade:
         self.tickers = list(df['ticker'])
         self.names = list(df['name'])
         self.net_amount = df['net_amount'].sum()
-        self.cash_folw = df['cash_flow'].sum()
+        self.cash_folw = df['cashflow'].sum()
         print(f'|- cash flow of synthetic trade: {self.cash_folw}')
         return df
 
@@ -58,7 +58,7 @@ def compose_data_synthetic_sell_of_date(ticker, date, num_shares=None, trades_hi
     net_amount = consideration + commission
     sign = -1 if 'Sell' in type else 1
     delta_shares = sign * num_shares
-    cash_flow = -sign * net_amount
+    cashflow = -sign * net_amount
 
     dct = {
         'date': date,
@@ -71,7 +71,7 @@ def compose_data_synthetic_sell_of_date(ticker, date, num_shares=None, trades_hi
         'commission': commission,
         'net_amount': net_amount,
         'delta_shares': delta_shares,
-        'cash_flow': cash_flow,
+        'cashflow': cashflow,
     }
     return dct
 
@@ -84,7 +84,7 @@ def compose_data_systhetic_buy_of_date(ticker, date, num_shares):
     net_amount = consideration + commission
     sign = -1 if 'Sell' in type else 1
     delta_shares = sign * num_shares
-    cash_flow = -sign * net_amount
+    cashflow = -sign * net_amount
 
     dct = {
         'date': date,
@@ -97,7 +97,7 @@ def compose_data_systhetic_buy_of_date(ticker, date, num_shares):
         'commission': commission,
         'net_amount': net_amount,
         'delta_shares': delta_shares,
-        'cash_flow': cash_flow,
+        'cashflow': cashflow,
     }
     return dct
 

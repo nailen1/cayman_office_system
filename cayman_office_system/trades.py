@@ -1,25 +1,23 @@
 import pandas as pd
-from shining_pebbles import get_today, get_date_range
-from .finance_utils import get_ticker_bbg_of_ticker
+import numpy as np
 from .trade_utils import get_dates_of_trades_in_file_folder
 from .trade_parser import Trade
-from .birdeye_connector import get_price_of_date_by_ticker
+from shining_pebbles import get_today, get_date_range
+from .birdeye_connector import get_price_by_ticker
 from .market_information import append_market_info_to_df
 from .trade_synthetic_data import DNDONGA_MERGER
 from .trades_synthetic import SyntheticTrades
-
 
 class Trades:
     def __init__(self, start_date=None, end_date=None):
         self.dates = self.set_period(start_date=start_date, end_date=end_date)
         self.trades = self.get_trades()
-        self.merged_info = self.get_merged_info()
-        self.history = self.get_history()
-        self.pl_buys = self.get_pl_evaluated_of_buys()
-        self.pl_sells = self.get_pl_realized_of_sells()
-        # self.timeseries_cash_flow = self.get_timeseries_of_cash_flow()
-        # self.timeseries_evaluation = self.get_timeseries_of_evaluation()
-
+        self._raw = self.get_raw()
+        self.tickers = self.get_tickers()
+        self.df = self.get_df()
+        self.buys = self.get_df_buys()
+        self.sells = self.get_df_sells()
+ 
     def set_period(self, start_date=None, end_date=None):
         self.start_date = start_date
         self.end_date = end_date
@@ -36,36 +34,62 @@ class Trades:
         self.trades = trades
         return trades
     
-    def get_merged_info(self, synthetic_trades=True):
+    def get_raw(self, synthetic_trades=True):
         dfs = [trade.df for trade in self.trades]
         if synthetic_trades:
             dfs = dfs + [SyntheticTrades(data_sellbuys=DNDONGA_MERGER).df]        
         df = pd.concat(dfs, axis=0)
         df = df.reset_index(drop=True)
         df = df.sort_values(by='date', ascending=True)
-        df_merged_info = append_market_info_to_df(df)
-        df_merged_info = df_merged_info.rename(columns={'name': 'name_in_file', 'name_y': 'name', 'average_price': 'price_average'})
-        self.merged_info = df_merged_info
+        df_merged = append_market_info_to_df(df)
+        df_merged = df_merged.rename(columns={'name': 'name_in_file', 'name_y': 'name', 'average_price': 'price_trade', 'net_amount': 'amount_trade'})
+        self._raw = df_merged
         # ['date', 'name_x', 'ticker', 'type', 'num_shares', 'average_price',
-        #        'consideration', 'commission', 'net_amount', 'delta_shares',
-        #        'cash_flow', 'ticker_bbg', 'name_kr', 'name_y', 'market_index',
+        #        'consideration', 'commission', 'amount_trade', 'delta_shares',
+        #        'cashflow', 'ticker_bbg', 'name_kr', 'name_y', 'market_index',
         #        'sector', 'cap(/1e8)', 'price_last']
-        return df_merged_info
+        return df_merged
+    
+    def get_tickers(self):
+        if not hasattr(self, '_raw'):
+            self.get_raw()
+        return self._raw['ticker'].unique()
 
-
-    def get_history(self):
-        if not hasattr(self, 'merged_info'):
-            self.get_merged_info()
-        df = self.merged_info
-        cols_to_keep = ['date', 'ticker', 'name', 'type', 'num_shares', 'price_average', 'net_amount', 'cash_flow']
+    def get_df(self):
+        if not hasattr(self, '_raw'):
+            self.get_raw()
+        df = self._raw
+        cols_to_keep = ['date', 'ticker', 'name', 'type', 'num_shares', 'price_trade', 'amount_trade', 'delta_shares', 'cashflow']
         df = df[cols_to_keep]
-        self.history = df
+        self.df = df        
+        dct = {}
+        for ticker in self.tickers:
+            df_ticker = df[df['ticker']==ticker].copy()
+            df_ticker = df_ticker.reset_index(drop=True)
+            df_ticker.loc[:,'cashflow_cum'] = df_ticker['cashflow'].cumsum()
+            df_ticker.loc[:,'num_shares_cum'] = df_ticker['delta_shares'].cumsum()
+            df_ticker.loc[:,'price_average'] = df_ticker.apply(lambda row: round(-row['cashflow_cum']/row['num_shares_cum'],2) if row['num_shares_cum'] != 0 else 0, axis=1)
+            dct[ticker] = df_ticker
+        self.dfs = dct
         return df
     
-    def get_pl_evaluated_of_buys(self):
-        if not hasattr(self, 'merged_info'):
-            self.get_merged_info()        
-        df = self.merged_info.copy()
+    # def get_df_stock(self, ticker):
+    #     df = self.dfs[ticker]
+    #     df_nums = df[['date', 'ticker', 'name', 'num_shares_cum', 'price_trade', 'price_average']].copy()
+    #     df_nums.loc[:, 'total_amount'] = df_nums['num_shares_cum'] * df_nums['price_average']
+    #     df_nums.loc[:, 'realization'] = df['cashflow'].apply(lambda x: x if x > 0 else 0)
+    #     df_all_dates = pd.DataFrame({'date': get_date_range(start_date_str=df_nums['date'].min(), end_date_str=df_nums['date'].max())})
+    #     df_merge = pd.merge(df_all_dates, df_nums, on='date', how='left').sort_values('date').ffill()
+    #     price_of_ticker = get_price_by_ticker(ticker=ticker)
+    #     df_merge = df_merge.merge(price_of_ticker, how='left', left_on='date', right_index=True).ffill()
+    #     df_merge['valuation'] = df_merge['num_shares_cum'] * df_merge['price_last']
+    #     df_merge['pl'] = df_merge['valuation'] - df_merge['total_amount']
+    #     return df_merge
+    
+    def get_df_buys(self):
+        if not hasattr(self, '_raw'):
+            self.get_raw()        
+        df = self._raw.copy()
         df = df[df['type'].isin(['Buy', 'Buy_synthetic'])]
 
         # DN exceptions before '2024-10-07'
@@ -75,19 +99,19 @@ class Trades:
             return row['price_last']
         
         df['price_last'] = df.apply(adjust_price, axis=1)
-        df['evaluation'] = df['num_shares'] * df['price_last']
-        df['pl'] = df['evaluation'] - df['net_amount']
-        df['return'] = (df['price_last'] / df['price_average'] - 1)*100
-        cols_to_keep = ['date', 'ticker', 'name', 'delta_shares', 'price_average', 'price_last', 'net_amount', 'evaluation', 'pl', 'return']
+        df['valuation'] = df['num_shares'] * df['price_last']
+        df['pl'] = df['valuation'] - df['amount_trade']
+        df['return'] = (df['price_last'] / df['price_trade'] - 1)*100
+        cols_to_keep = ['date', 'ticker', 'name', 'delta_shares', 'price_trade', 'price_last', 'amount_trade', 'valuation', 'pl', 'return']
         df = df[cols_to_keep]
-        self.pl_buys = df
+        self.buys = df
         return df
     
-    def get_pl_realized_of_sells(self):
-        if not hasattr(self, 'merged_info'):
-            self.get_merged_info()        
-        df_ref = self.merged_info.copy()
-        df = df_ref[df_ref['type'].isin(['Sell', 'Sell_synthetic'])]
+    def get_df_sells(self):
+        if not hasattr(self, '_raw'):
+            self.get_raw()        
+        df_ref = self._raw.copy()
+        df = df_ref[df_ref['type'].isin(['Sell', 'Sell_synthetic'])].copy()
 
         # DN exceptions before '2024-10-07'
         def adjust_price(row):
@@ -98,57 +122,46 @@ class Trades:
         def get_average_purchase_price(df, date, name):
             df_dated = df[df['date']<date]
             df_named = df_dated[df_dated['name']==name]
-            total_net_amount, total_num_shares = df_named['net_amount'].sum(), df_named['num_shares'].sum()
+            total_net_amount, total_num_shares = df_named['amount_trade'].sum(), df_named['num_shares'].sum()
             average_purchase_price = total_net_amount/total_num_shares
             return average_purchase_price
         
         df['average_purchase_price'] = df.apply(lambda row: get_average_purchase_price(df_ref, row['date'], row['name']), axis=1)
         df['price_last'] = df.apply(adjust_price, axis=1)
-        df['evaluation'] = df['num_shares'] * df['average_purchase_price']
+        df['valuation'] = df['num_shares'] * df['average_purchase_price']
         df['realization'] = df['num_shares'] * df['price_last']
-        df['pl'] = df['realization'] - df['evaluation']
+        df['pl'] = df['realization'] - df['valuation']
         df['return'] = (df['price_last'] / df['average_purchase_price'] - 1)*100
-        cols_to_keep = ['date', 'ticker', 'name', 'delta_shares', 'average_purchase_price', 'price_last', 'realization', 'pl', 'return']
+        cols_to_keep = ['date', 'ticker', 'name', 'delta_shares', 'average_purchase_price', 'price_last', 'valuation', 'realization', 'pl', 'return']
         df = df[cols_to_keep]
-        self.pl_sells = df
-        return df
-
-    
-    def get_evaluation(self):
-        df = self.pl.copy()[['date', 'ticker', 'num_shares', 'evaluation']]
-        df['price_of_date'] = df.apply(lambda row: get_price_of_date_by_ticker(ticker=row['ticker'], date=row['date']), axis=1)
-        df['evaluation_of_date'] = df['num_shares'] * df['price_of_date'] if df['type'] == 'Buy' else 0
-        df_evaluation = df[['date', 'evaluation_of_date', 'evaluation']].groupby('date').sum()
-        df_evaluation = df_evaluation.rename(columns={'evaluation': 'evaluation_of_today'})
-        self.evaluation = df_evaluation
-        self.total_evaluation_of_today = {'date': get_today(), 'total_evaluation': df_evaluation['evaluation_of_today'].sum()}
-        return df_evaluation
-    
-    def get_timeseries_of_cash_flow(self):
-        if not hasattr(self, 'trades'):
-            self.get_trades()
-        trades = self.trades
-        cash_flow = [trade.cash_flow for trade in trades]
-        df = pd.DataFrame(cash_flow)
-        df = df.set_index('date').sort_index()
-        df['total_cash_flow'] = df['cash_flow'].cumsum()
-        self.timeseries_cash_flow = df
+        self.sells = df
         return df
     
-    # def get_timeseries_of_sells(self):
 
-    
-    def get_timeseries_of_evaluation(self):
-        trade_objs = self.trades
-        dfs = [trade.timeseries.iloc[:, -2:-1] for trade in trade_objs]
-        df = pd.concat(dfs, axis=1)
-        df = df.fillna(0)
-        all_dates = get_date_range(self.dates[0], get_today())
-        df = df.reindex(all_dates)
-        df = df.ffill()
-        df = df.fillna(0)
+# def plot_stock(df, ticker=None, name=None):
+#     ticker, name = df.iloc[0]['ticker'], df.iloc[0]['name']
+#     fig, ax1 = plt.subplots(figsize=(10, 6))
 
-        df['total_evaluation'] = df.sum(axis=1)
-        self.timeseries_evaluation = df
-        return df
+#     ax1.fill_between(df['date'], df['total_amount'], color='skyblue', alpha=0.4, label='Total Amount', where=np.isfinite(df['total_amount']))    
+#     bars = ax1.bar(df['date'], df['realization'], color='lightcoral', alpha=0.6, label='Realization')
+
+#     for bar in bars:
+#         height = bar.get_height()
+#         if height > 0:  # Only label positive bars
+#             ax1.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2e}', ha='center', va='bottom', color='black', fontsize=10)
+
+#     ax1.plot(df['date'], df['valuation'], color='orange', label='Valuation', linewidth=2)    
+#     ax1.plot(df['date'], df['pl'], color='gray', label='P/L', linewidth=1)
+#     ax1.set_ylabel('KRW', color='black')
+#     plt.xticks(rotation=90, ha='center')
+
+#     ax1.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray', alpha=0.6)
+#     title_suffix = f': {name} ({ticker})' if name and ticker else ''
+#     fig.suptitle(f'Stock Valuation'+title_suffix, fontsize=16, color='black')
+#     ax1.legend(loc='upper left')
+#     plt.tight_layout()
+
+#     plt.show()
+
+#     return None
 

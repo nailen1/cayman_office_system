@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 from shining_pebbles import get_today, get_date_range
 from .dataset_constants import *
 from .dataset_loader import *
-from .timeseries import Timeseries
 from .holdings import Holdings
+from .finance_utils import get_last_day_of_month
+from .market_information import get_ks_equity_info
     
 class CaymanFund:
     def __init__(self, trades, date=None):
@@ -12,16 +13,39 @@ class CaymanFund:
         self.fund_code = 'LKEF'
         self.date = date or get_today()
         self.month = self.date.replace('-', '')[4:6] 
+        self.file_folder = file_folder['balance']
+        self.raw = self.open_raw_balance()
+        self.initial = self.get_initial_data_of_month()
+        self.frame = self.get_frame()
         self.trades = trades
-        self._timeseries = Timeseries(trades=self.trades)
-        self._holdings = Holdings(trades=self.trades)
-        self.tickers = self._holdings.tickers
-        self.equities = self._holdings.equities
-        self.timeseries_cash = self._timeseries.cash
-        self.timeseries_stock = self._timeseries.stock
-        self.timeseries = self._timeseries.df
-    
+        self.holdings = Holdings(trades=trades)
+        self.tickers = self.holdings.tickers
+        self.equities = get_ks_equity_info(self.tickers)
 
+    def open_raw_balance(self):
+        df = open_balance_of_month(month=self.month, file_folder=self.file_folder)
+        self.raw = df
+        return df
+
+    def get_initial_data_of_month(self):
+        df = self.raw
+        initial_data = get_data_balance(df)
+        self.initial = initial_data
+        self.initial_date = initial_data['date']
+        self.initial_balance = initial_data['available_balance']
+        return initial_data
+
+    def get_frame(self):
+        initial_date = self.initial_date
+        initial_balance_usd = self.initial_balance
+        # initial_usdkrw = get_usdkrw_of_date(date=initial_date)
+        # initial_balance_krw = initial_balance_usd * initial_usdkrw
+        frame_data = {'date': initial_date, 'initial_balance_usd': initial_balance_usd}
+        frame = pd.DataFrame(data=frame_data, index=[0])
+        frame = frame.set_index('date')
+        self.frame = frame
+        return frame
+    
     def get_timeseries_cash(self):
         frame = self.frame
         amounts = self.trades.timeseries_amount
