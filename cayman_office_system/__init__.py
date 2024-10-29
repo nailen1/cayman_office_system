@@ -11,7 +11,7 @@ from .trades import *
 from .stock import *
 from .holdings import *
 from .account import *
-from .cayman_fund import *
+from .fund import *
 from .trade_synthetic import *
 from .trades_synthetic import *
 from .timeseries import *

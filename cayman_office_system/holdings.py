@@ -1,47 +1,70 @@
 from .trade_parser import *
 from .trades import Trades
+from .timeseries import Timeseries
+from .stock import Stock
 from .finance_utils import *
 from .market_information import get_ks_equity_info, get_mapping_ks_name
 
 class Holdings:
     def __init__(self, trades=None):
-        self.trades = self.set_trades(trades)
-        self._raw = self.get_raw()
+        self.trades = self.settrades(trades)
+        self.ts = self.set_timeseries()
+        self.stock = self.get_stocks()
         self.df = self.get_df()
-        self.equities = get_ks_equity_info(self.tickers)
+        self.tickers = self.get_tickers()
+        self.equities = self.get_equities()
 
-    def set_trades(self, trades=None):
+    def settrades(self, trades=None):
         if trades is None:
             trades = Trades()
         self.trades = trades
         return trades
 
-    def get_raw(self):
-        buys = self.trades.buys[['ticker', 'delta_shares', 'net_amount', 'valuation']]
-        buys.columns = ['ticker', 'delta_shares', 'action', 'stock']
-        sells = self.trades.sells[['ticker', 'delta_shares', 'valuation', 'realization']]
-        sells.columns = ['ticker', 'delta_shares', 'action', 'stock']
-        sells.loc[:, 'action'] = -sells['action']
-        sells.loc[:, 'stock'] = -sells['stock']    
-        df = pd.concat([buys, sells], axis=0)
-        self._raw = df
-        return df
+    def set_timeseries(self):
+        ts = Timeseries(trades=self.trades)
+        self.ts = ts
+        return ts
+    
+    def get_stocks(self):
+        self.stock = self.trades.stock
+        return self.stock
+
+    def get_df_ref(self):
+        stock_objs = self.stock
+        dfs = [stock_obj.latest for stock_obj in stock_objs.values()]
+        df = pd.concat(dfs, axis=0)
+        self.date = df.iloc[0]['date']
+        df = df.set_index('ticker').sort_values(by='valuation', ascending=False)
+        cols_ordered = ['name', 'num_shares_cum', 'price_average', 'price_last', 'total_amount', 'valuation', 'pl']
+        df_ref = df[cols_ordered].rename(columns={'num_shares_cum': 'num_shares'})
+        self.df_ref = df_ref
+        return df_ref
     
     def get_df(self):
-        df = self._raw
-        df = df.groupby('ticker').sum()
-        df = df[df['delta_shares'] != 0]
-        df['price_average'] = df['action'] / df['delta_shares']
-        df['price_last'] = df['stock'] / df['delta_shares']
-        df['ticker_bbg'] = df.index.map(get_ticker_bbg_of_ticker)
-        df['name'] = df['ticker_bbg'].map(get_mapping_ks_name())
-        cols_to_keep = ['name', 'delta_shares', 'price_average', 'price_last', 'action', 'stock']
-        df = df[cols_to_keep]
-        df['pl'] = df['stock'] - df['action']
-        df['return'] = df['pl'] / df['action'] * 100
-        df = df.rename(columns={'delta_shares': 'num_shares', 'action': 'total_amount', 'stock': 'total_valuation'})
-        df = df.sort_values('total_valuation', ascending=False)
-        self.tickers = df(df.index)
-        self.names = df(df['name'])
+        if not hasattr(self, 'df_ref'):
+            self.get_df_ref()
+        df = self.df_ref.copy()
+        df = df[df['num_shares'] != 0]
+        df['return'] = (df['valuation'] / df['total_amount'] -1) * 100
+        df_nav = self.ts.df
+        df_nav = df_nav[df_nav.index == self.date]
+        df['weight'] = df['valuation'] / df_nav.iloc[0]['nav: krw'] * 100
         self.df = df
+        return df
+    
+    def get_tickers(self):
+        if not hasattr(self, 'df'):
+            self.get_df()
+        tickers = list(self.df.index)
+        self.tickers = tickers
+        return tickers
+
+    def get_equities(self):
+        if not hasattr(self, 'tickers'):
+            self.get_tickers()
+        tickers = self.tickers
+        tickers_bbg = [get_ticker_bbg_of_ticker(ticker) for ticker in tickers]
+        ks = get_ks_market_info()
+        df = ks[ks.index.isin(tickers_bbg)]
+        self.equities = df
         return df

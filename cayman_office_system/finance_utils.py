@@ -6,8 +6,12 @@ import calendar
 def get_ticker_bbg_of_ticker(ticker):
     return f"{ticker} KS Equity".replace(' KS KS', ' KS')
 
+map_ticker_to_ticker_bbg = get_ticker_bbg_of_ticker
+
 def get_ticker_from_ticker_bbg(ticker_bbg):
     return ticker_bbg.replace(' Equity', '')
+
+map_ticker_bbg_to_ticker = get_ticker_from_ticker_bbg
 
 def convert_to_unit(number, currency='KRW', level=None):
     if pd.isna(number) or number == "NaN":
@@ -67,18 +71,3 @@ def get_last_day_of_month(date_str):
     last_date_obj = datetime(date_obj.year, date_obj.month, last_day)
     
     return last_date_obj.strftime(output_format)
-
-
-# def return_timeseries_of_initial_row(df):
-#     index = 0
-#     df.loc[df.index[index], 'initial_balance: krw'] = df.loc[df.index[index], 'initial_balance: usd'] * df.loc[df.index[index], 'usdkrw']
-#     df.loc[df.index[index], 'cash: krw'] = df.loc[df.index[index], 'initial_balance: krw'] + df.loc[df.index[index], 'cashflow: krw']
-#     df.loc[df.index[index], 'cash: usd'] = df.loc[df.index[index], 'initial_balance: usd'] + df.loc[df.index[index], 'cashflow: usd']
-#     return df
-
-# def return_timeseries_of_indexed_row(df, index):
-#     df.loc[df.index[index], 'initial_balance: usd'] = df.loc[df.index[index - 1], 'cash: usd']
-#     df.loc[df.index[index], 'initial_balance: krw'] = df.loc[df.index[index], 'initial_balance: usd'] * df.loc[df.index[index], 'usdkrw']
-#     df.loc[df.index[index], 'cash: krw'] = df.loc[df.index[index], 'initial_balance: krw'] + df.loc[df.index[index], 'cashflow: krw']
-#     df.loc[df.index[index], 'cash: usd'] = df.loc[df.index[index], 'initial_balance: usd'] + df.loc[df.index[index], 'cashflow: usd']
-#     return df

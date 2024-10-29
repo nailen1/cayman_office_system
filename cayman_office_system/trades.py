@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from .trade_utils import get_dates_of_trades_in_file_folder
 from .trade_parser import Trade
+from .stock import Stock
 from shining_pebbles import get_today, get_date_range
 from .birdeye_connector import get_price_by_ticker
 from .market_information import append_market_info_to_df
@@ -15,6 +16,7 @@ class Trades:
         self._raw = self.get_raw()
         self.tickers = self.get_tickers()
         self.df = self.get_df()
+        self.stock = self.get_stock_objs()
         self.buys = self.get_df_buys()
         self.sells = self.get_df_sells()
  
@@ -73,19 +75,14 @@ class Trades:
         self.dfs = dct
         return df
     
-    # def get_df_stock(self, ticker):
-    #     df = self.dfs[ticker]
-    #     df_nums = df[['date', 'ticker', 'name', 'num_shares_cum', 'price_trade', 'price_average']].copy()
-    #     df_nums.loc[:, 'total_amount'] = df_nums['num_shares_cum'] * df_nums['price_average']
-    #     df_nums.loc[:, 'realization'] = df['cashflow'].apply(lambda x: x if x > 0 else 0)
-    #     df_all_dates = pd.DataFrame({'date': get_date_range(start_date_str=df_nums['date'].min(), end_date_str=df_nums['date'].max())})
-    #     df_merge = pd.merge(df_all_dates, df_nums, on='date', how='left').sort_values('date').ffill()
-    #     price_of_ticker = get_price_by_ticker(ticker=ticker)
-    #     df_merge = df_merge.merge(price_of_ticker, how='left', left_on='date', right_index=True).ffill()
-    #     df_merge['valuation'] = df_merge['num_shares_cum'] * df_merge['price_last']
-    #     df_merge['pl'] = df_merge['valuation'] - df_merge['total_amount']
-    #     return df_merge
-    
+    def get_stock_objs(self):
+        dct = {}
+        for ticker, df in self.dfs.items():
+            stock = Stock(df=df)
+            dct[ticker] = stock
+        self.stock = dct
+        return dct
+
     def get_df_buys(self):
         if not hasattr(self, '_raw'):
             self.get_raw()        
