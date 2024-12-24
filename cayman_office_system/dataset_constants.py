@@ -32,9 +32,9 @@ file_folder = {
     'generate': FILE_FOLDER_GENERATE
 }
 
+FILE_NAME_PREFIX_TRADE = 'Samsung Securities Co., Ltd.'
 FILE_NAME_PREFIX_ORDER = '^Life Asset trade instruction'
 FILE_NAME_PREFIX_STATUS = '^Life Asset status'
-FILE_NAME_PREFIX_TRADE = '^Life Asset balance'
 FILE_NAME_PREFIX_HOLDING = '^dataset-cayman-holding'
 
 

@@ -1,3 +1,10 @@
+#virtualenv
+env-cos/
+
+#notebooks
+*.ipynb_checkpoints
+*.ipynb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

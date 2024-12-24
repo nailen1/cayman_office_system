@@ -3,7 +3,7 @@ from .dataset_loader import *
 from .timeseries import Timeseries
 from .holdings import Holdings
     
-class Fund:
+class CaymanFund:
     def __init__(self, trades):
         self.fund_name = 'LIFE KOREA ENGAGEMENT FUND'
         self.fund_code = 'LKEF'
@@ -15,6 +15,7 @@ class Fund:
         self.tickers = self.holdings.tickers
         self.equities = self.holdings.equities
         self.timeseries = self.get_timeserieses()
+        self.portfolio = self.get_portfolio()
         self.stock = self.get_stock()
 
 

@@ -4,9 +4,11 @@ from .finance_utils import *
 from .canonical_transformer import *
 from .birdeye_connector import *
 from .dataset_loader import *
+from .dataset_utils import *
 from .market_information import *
 from .order_generator import *
 from .order_parser import *
+from .order_utils import *
 from .trade_parser import *
 from .trades import *
 from .stock import *
