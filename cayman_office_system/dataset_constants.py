@@ -11,6 +11,7 @@ DIR_STATUS = 'dataset-status'
 DIR_HOLDING = 'dataset-holding'
 DIR_CURRENCY = 'dataset-currency'
 DIR_GENERATE = 'dataset-generate'
+DIR_BBG = 'dataset-bbg'
 
 FILE_FOLDER_SECTOR = os.path.join(BASE_DIR, DIR_SECTOR)
 FILE_FOLDER_ORDER = os.path.join(BASE_DIR, DIR_ORDER)
@@ -20,6 +21,7 @@ FILE_FOLDER_STATUS = os.path.join(BASE_DIR, DIR_STATUS)
 FILE_FOLDER_HOLDING = os.path.join(BASE_DIR, DIR_HOLDING)
 FILE_FOLDER_CURRENCY = os.path.join(BASE_DIR, DIR_CURRENCY)
 FILE_FOLDER_GENERATE = os.path.join(BASE_DIR, DIR_GENERATE)
+FILE_FOLDER_BBG = os.path.join(BASE_DIR, DIR_BBG)
 
 file_folder = {
     'sector': FILE_FOLDER_SECTOR,
@@ -29,7 +31,8 @@ file_folder = {
     'status': FILE_FOLDER_STATUS,
     'holding': FILE_FOLDER_HOLDING,
     'currency': FILE_FOLDER_CURRENCY,
-    'generate': FILE_FOLDER_GENERATE
+    'generate': FILE_FOLDER_GENERATE,
+    'bbg': FILE_FOLDER_BBG
 }
 
 FILE_NAME_PREFIX_TRADE = 'Samsung Securities Co., Ltd.'

@@ -55,7 +55,7 @@ class Trades:
     def get_tickers(self):
         if not hasattr(self, '_raw'):
             self.get_raw()
-        return self._raw['ticker'].unique()
+        return list(self._raw['ticker'].unique())
 
     def get_df(self):
         if not hasattr(self, '_raw'):
@@ -78,8 +78,8 @@ class Trades:
     def get_stock_objs(self):
         dct = {}
         for ticker, df in self.dfs.items():
-            stock = Stock(df=df)
-            dct[ticker] = stock
+            stock_obj = Stock(df=df)
+            dct[ticker] = stock_obj
         self.stock = dct
         return dct
 

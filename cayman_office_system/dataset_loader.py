@@ -20,6 +20,18 @@ def get_usdkrw_of_date(date):
     usdkrw = df[df.index <= date].iloc[-1]['usdkrw']
     return usdkrw
 
+def get_df_price_usdlevetf():
+    fld = 'PX_LAST'
+    df = open_df_in_file_folder_by_regex(file_folder=file_folder['bbg'], regex=f'261250 KS Equity-{fld}')
+    df = df.rename(columns={f'{fld}': 'price_last'})
+    return df
+
+def get_df_cap_usdlevetf():
+    fld = 'CUR_MKT_CAP'
+    df = open_df_in_file_folder_by_regex(file_folder=file_folder['bbg'], regex=f'261250 KS Equity-{fld}')
+    df = df.rename(columns={f'{fld}': 'cap(/1e6)'})
+    return df
+
 def open_excel(file_name, file_folder, engine='openpyxl'):
     file_path = os.path.join(file_folder, file_name)
     return pd.read_excel(file_path, engine=engine)
@@ -56,11 +68,6 @@ def get_data_balance(df):
     dct['date'] = date
     return dct
 
-def scan_files_order(file_folder=file_folder['order']):
-    prefix = FILE_NAME_PREFIX_ORDER
-    file_names = scan_files_including_regex(file_folder=file_folder, regex=prefix)
-    return file_names
-
 def extract_date_in_file_name(file_name):
     match = re.search(r'\b\d{8}\b', file_name)
     if match:
@@ -72,12 +79,6 @@ def get_order_date_in_file_name(file_name, form='%Y-%m-%d'):
     if form == '%Y-%m-%d':
         date = f'{date[:4]}-{date[4:6]}-{date[6:]}' if '-' not in date else date
     return date
-
-def get_dates_of_order(file_folder=file_folder['order'], form='%Y-%m-%d'):
-    file_names = scan_files_order(file_folder=file_folder)
-    dates = [get_order_date_in_file_name(file_name=file_name, form=form) for file_name in file_names]
-    dates = sorted(set(dates))
-    return dates
 
 def open_df_order_by_index(file_folder=file_folder['order'], index=-1):
     prefix = FILE_NAME_PREFIX_ORDER

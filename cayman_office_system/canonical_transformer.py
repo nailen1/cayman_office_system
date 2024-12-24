@@ -2,9 +2,12 @@ import pandas as pd
 import os
 import json
 
-def map_df_to_data(df):
+
+def map_df_to_data(df, capitalize=False):
     df = df.reset_index() if df.index.name else df
-    df = df.fillna('')
+    df = df.fillna('')    
+    if capitalize:
+        df = capitalize_column_names_in_df(df)
     data = df.to_dict(orient='records')
     return data
 
@@ -55,6 +58,7 @@ map_df_to_csv = save_df_as_csv
 map_df_to_json = save_df_as_json
 map_data_to_json = save_data_as_json
 
+
 def rename_columns(df, mapping):
     df = df.rename(columns=mapping)
     df.columns = [col.upper() for col in df.columns]
@@ -64,3 +68,15 @@ def load_json_file(file_name):
     with open(file_name, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data
+
+
+def capitalize_column_names_in_df(df):
+    cols_ref = df.columns
+    df.columns = [col.upper() for col in cols_ref]
+    return df
+
+def transfrom_df_to_data_fits_universal_dataframe(df, rnd=2):
+    df = round(df, rnd)
+    data = map_df_to_data(df, capitalize=True)
+    return data
+    

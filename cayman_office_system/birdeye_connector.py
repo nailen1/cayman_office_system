@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime
+from .dataset_loader import get_df_price_usdlevetf, get_df_cap_usdlevetf
 
 load_dotenv()
 
@@ -26,6 +27,9 @@ MAPPING_TIMESERIES_TABLE_COLUMNS = {
     'pr1': 'price_last',
 } 
 
+TICKER_USD_LEVERAGED_ETF = '261250'
+TICKER_DONGA_TIRE = '282690'
+
 COLUMNS_FOR_PRICE = [k for k, v in MAPPING_LATEST_TABLE_COLUMNS.items()]
 COLUMNS_FOR_TIMESERIES = [k for k, v in MAPPING_TIMESERIES_TABLE_COLUMNS.items()]
 
@@ -41,7 +45,7 @@ def get_data_of_ks_stock(cols):
 
 def import_hotfix_data_of_ks_stock():
     hotfix_data = [
-        ('282690', '동아타이어', 13500, 1853),
+        (TICKER_DONGA_TIRE, '동아타이어', 13500, 1853),
     ]
     return hotfix_data
 
@@ -66,7 +70,7 @@ def get_data_of_timeseries_by_ticker(ticker, cols):
         cursor.execute(query)
         data = cursor.fetchall()
     except:
-        if ticker == '282690':
+        if ticker == TICKER_DONGA_TIRE:
             data = [{'dt': '2024-09-02', 'pr1': 13500}]
     return data
 
@@ -78,10 +82,13 @@ def preprocess_df_from_timeseries_data(data):
     return df
 
 def get_df_timeseries_by_ticker(ticker):
-    data = get_data_of_timeseries_by_ticker(ticker, COLUMNS_FOR_TIMESERIES)
-    df = preprocess_df_from_timeseries_data(data)
-    if ticker == '282690':
-        df = df.ffill()
+    if TICKER_USD_LEVERAGED_ETF in ticker:
+        df = get_df_price_usdlevetf()
+    else:
+        data = get_data_of_timeseries_by_ticker(ticker, COLUMNS_FOR_TIMESERIES)
+        df = preprocess_df_from_timeseries_data(data)
+    if ticker == TICKER_DONGA_TIRE:
+        df = df.ffill()        
     return df
 
 def get_price_of_date_in_df(df, date):
@@ -95,22 +102,26 @@ def get_price_by_ticker(ticker):
     return df
 
 def get_price_of_date_by_ticker(ticker, date):
-    connection = mysql.connector.connect(user=user, password=password, host=host, database=database)
-    cursor = connection.cursor()
-    ticker = ticker[:6]
-    try:
-        query = f"SELECT dt, pr1 FROM p_ks_{ticker} WHERE dt = '{date}'"
-        cursor.execute(query)
-        data = cursor.fetchall()
-        price_of_date = data[-1][-1]
-    except:
-        data = import_hotfix_constant_data_price_of_date_by_ticker(ticker, date)
-        price_of_date = data[-1][-1]
+    if TICKER_USD_LEVERAGED_ETF in ticker:
+        df = get_df_price_usdlevetf()
+        price_of_date = df[df.index <= date].iloc[-1]['price_last']
+    else:
+        connection = mysql.connector.connect(user=user, password=password, host=host, database=database)
+        cursor = connection.cursor()
+        ticker = ticker[:6]
+        try:
+            query = f"SELECT dt, pr1 FROM p_ks_{ticker} WHERE dt = '{date}'"
+            cursor.execute(query)
+            data = cursor.fetchall()
+            price_of_date = data[-1][-1]
+        except:
+            data = import_hotfix_constant_data_price_of_date_by_ticker(ticker, date)
+            price_of_date = data[-1][-1]
     return price_of_date
 
 def import_hotfix_constant_data_price_of_date_by_ticker(ticker, date):
     date = datetime.strptime(date, "%Y-%m-%d").date()
-    mapping_hotfix_price = {'282690': 13500}
+    mapping_hotfix_price = {TICKER_DONGA_TIRE: 13500}
     price_of_date = mapping_hotfix_price[ticker]
     data = [(date, price_of_date)]
     return data
