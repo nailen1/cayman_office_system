@@ -160,8 +160,8 @@ def get_df_nav_from_df_timeseries(df):
     df = df[cols_for_nav].copy()
     df['return: usd'] = df['nav: usd'].pct_change().fillna(0) * 100
     df['return: krw'] = df['nav: krw'].pct_change().fillna(0) * 100
-    df['cumreturn: usd'] = (df['nav: usd']/df['nav: usd'].iloc[0] - 1) * 100
-    df['cumreturn: krw'] = (df['nav: krw']/df['nav: krw'].iloc[0] - 1) * 100
+    df['cumreturn: usd'] = (df['nav: usd']/df['nav: usd'].loc[LKEF_INCEPTION_DATE] - 1) * 100
+    df['cumreturn: krw'] = (df['nav: krw']/df['nav: krw'].loc[LKEF_INCEPTION_DATE] - 1) * 100
     cols_for_nav = ['nav: usd', 'nav: krw', 'return: usd', 'return: krw', 'cumreturn: usd', 'cumreturn: krw', 'usdkrw']
     nav = df[cols_for_nav]
     return nav
