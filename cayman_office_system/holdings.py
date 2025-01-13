@@ -65,8 +65,8 @@ class Holdings:
         tickers = self.tickers
         tickers_bbg = [get_ticker_bbg_of_ticker(ticker) for ticker in tickers]
         ks = get_ks_market_info()
-        df = ks[ks.index.isin(tickers_bbg)]
-        df['ticker'] = df.index.map(map_ticker_bbg_to_ticker)
+        df = ks[ks.index.isin(tickers_bbg)].copy()
+        df.loc[:, 'ticker'] = df.index.map(map_ticker_bbg_to_ticker)
         df = df.set_index('ticker')
         df = df.merge(self.df[['weight']], left_index=True, right_index=True).sort_values(by='weight', ascending=False)
         self.equities = df

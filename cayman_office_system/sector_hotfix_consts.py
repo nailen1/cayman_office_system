@@ -1,0 +1,1 @@
+HOTFIX_DATA_SECTOR = [{'ticker_bbg': '282690 KS Equity', 'NAME_KOREAN': '동아타이어', 'NAME': 'DONG AH TIRE & RUBBER CO LTD', 'GICS_SECTOR_NAME': 'Consumer Discretionary', 'market_index': 'KOSPI Index(Delisted at 2024-10-08)'}]

@@ -2,7 +2,8 @@
 import re
 from datetime import datetime
 from shining_pebbles import scan_files_including_regex
-from .dataset_constants import file_folder, FILE_NAME_PREFIX_TRADE
+from .path_director import file_folder
+from .dataset_constants import FILE_NAME_PREFIX_TRADE
 from .dataset_loader import open_excel
 from .dataset_utils import get_dates_of_documents_in_file_folder
 

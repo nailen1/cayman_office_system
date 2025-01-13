@@ -1,17 +1,21 @@
 from shining_pebbles import scan_files_including_regex, pick_input_date_in_file_name, open_df_in_file_folder_by_regex
+from .path_director import file_folder
 from .dataset_constants import *
+from .sector_hotfix_consts import HOTFIX_DATA_SECTOR
 import pandas as pd
 import os
 import re
 
 
 def get_df_sector_ks():
-    sector_ks = open_df_in_file_folder_by_regex(file_folder=file_folder['sector'], regex='ks_name_sector')
+    sector_ks = open_df_in_file_folder_by_regex(file_folder=file_folder['market'], regex='ks_market')
+    for hotfix_datum in HOTFIX_DATA_SECTOR:
+        sector_ks.loc[hotfix_datum['ticker_bbg']] = hotfix_datum
     sector_ks = sector_ks.rename(columns=MAPPING_SECTOR)
     return sector_ks
 
 def get_df_usdkrw():
-    usdkrw = open_df_in_file_folder_by_regex(file_folder=file_folder['currency'], regex='USDKRW')
+    usdkrw = open_df_in_file_folder_by_regex(file_folder=file_folder['currency'], regex='USDKRW KRWT Curncy')
     usdkrw = usdkrw.rename(columns={'PX_LAST': 'usdkrw'})
     return usdkrw
 
@@ -38,6 +42,11 @@ def open_excel(file_name, file_folder, engine='openpyxl'):
 
 def open_balance_of_month(month, file_folder=file_folder['balance']):
     file_names = scan_files_including_regex(file_folder=file_folder, regex=f'^.*-{month}.xls$')
+    df = open_excel(file_folder=file_folder, file_name=file_names[-1], engine='xlrd')
+    return df
+
+def open_xls_balance(file_folder=file_folder['balance']):
+    file_names = scan_files_including_regex(file_folder=file_folder, regex=f'^dataset-cayman_balance.*.xls$')
     df = open_excel(file_folder=file_folder, file_name=file_names[-1], engine='xlrd')
     return df
 

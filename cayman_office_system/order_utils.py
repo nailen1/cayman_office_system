@@ -1,4 +1,5 @@
-from .dataset_constants import file_folder, FILE_NAME_PREFIX_ORDER
+from .path_director import file_folder
+from .dataset_constants import FILE_NAME_PREFIX_ORDER
 from .dataset_loader import open_df_order_by_date
 from .dataset_utils import get_dates_of_documents_in_file_folder
 import pandas as pd

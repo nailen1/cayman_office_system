@@ -1,4 +1,4 @@
-from .dataset_constants import file_folder
+from .path_director import file_folder
 from .trade_utils import *
 from .birdeye_connector import get_df_timeseries_by_ticker
 from .market_information import get_ks_market_info
@@ -115,7 +115,7 @@ class Transaction:
         self.ticker = self.get_ticker()
         self.name_bbg = self.get_name_bbg()
         self.df = self.get_df()
-        self.data = self.get_data_calculated()
+        self.data = self.get_data()
         
     def get_data_raw(self):
         data_raw = get_data_in_transaction(self.raw, KEYS_TRANSACTION)
@@ -148,6 +148,19 @@ class Transaction:
             'num_shares': self.num_shares,
             'average_price': self.average_price
         }
+
+        #    data_calculated = {
+        #     'date': self.date,
+        #     'name': self.name,
+        #     'ticker': self.ticker,
+        #     'type': self.type,
+        #     'num_shares': self.num_shares_calculated,
+        #     'average_price': self.average_price_calculated,
+        #     'consideration': self.consideration_calculated,
+        #     'commission': self.commission_calculated,
+        #     'sales_tax': self.sales_tax,
+        #     'net_amount': self.net_amount_calculated,
+        # }
         return self.data_in_transaction
     
     def get_ticker(self):
@@ -217,7 +230,7 @@ class Transaction:
         self.get_average_price_calculated()
         self.get_net_amount_calculated()
 
-        data = {
+        data_calculated = {
             'date': self.date,
             'name': self.name,
             'ticker': self.ticker,
@@ -226,7 +239,24 @@ class Transaction:
             'average_price': self.average_price_calculated,
             'consideration': self.consideration_calculated,
             'commission': self.commission_calculated,
+            'sales_tax': self.sales_tax,
             'net_amount': self.net_amount_calculated,
+        }
+        self.data_calculated = data_calculated
+        return data_calculated
+    
+    def get_data(self):
+        data = {
+            'date': self.date,
+            'name': self.name,
+            'ticker': self.ticker,
+            'type': self.type,
+            'num_shares': self.num_shares,
+            'average_price': self.average_price,
+            'consideration': self.consideration,
+            'commission': self.commission,
+            'sales_tax': self.sales_tax,
+            'net_amount': self.net_amount,
         }
         self.data = data
         return data
