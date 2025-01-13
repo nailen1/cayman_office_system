@@ -15,6 +15,7 @@ class CaymanFund:
         self.tickers = self.holdings.tickers
         self.equities = self.holdings.equities
         self.timeseries = self.get_timeserieses()
+        self.portfolio = self.get_portfolio()
         self.stock = self.get_stock()
 
 

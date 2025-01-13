@@ -2,8 +2,10 @@
 import re
 from datetime import datetime
 from shining_pebbles import scan_files_including_regex
-from .dataset_constants import file_folder
+from .path_director import file_folder
+from .dataset_constants import FILE_NAME_PREFIX_TRADE
 from .dataset_loader import open_excel
+from .dataset_utils import get_dates_of_documents_in_file_folder
 
 
 KEYS_TRANSACTION = ['Type',
@@ -19,22 +21,14 @@ KEYS_TRANSACTION = ['Type',
 
 KEY_SELLBUY = 'No. of Shares / Price'
 
-# FILE_NAME_PREFIX_TRADE = 'LKEF Trade'
-FILE_NAME_PREFIX_TRADE = 'Samsung Securities Co., Ltd.'
 
-def get_date_from_file_name(file_name, form):
-    match = re.search(r'\d{8}', file_name)
-    if not match:
-        return None
-    
-    date_str = match.group()
-    date_obj = datetime.strptime(date_str, '%Y%m%d')
-    
-    return date_obj.strftime(form)
+# def get_dates_of_trades_in_file_folder(file_folder=file_folder['trade'], form='%Y-%m-%d'):
+#     file_names = scan_files_including_regex(file_folder=file_folder, regex=FILE_NAME_PREFIX_TRADE)
+#     dates = [get_date_from_file_name(file_name=file_name, form=form) for file_name in file_names]
+#     return dates
 
 def get_dates_of_trades_in_file_folder(file_folder=file_folder['trade'], form='%Y-%m-%d'):
-    file_names = scan_files_including_regex(file_folder=file_folder, regex=FILE_NAME_PREFIX_TRADE)
-    dates = [get_date_from_file_name(file_name=file_name, form=form) for file_name in file_names]
+    dates = get_dates_of_documents_in_file_folder(file_folder=file_folder, regex=FILE_NAME_PREFIX_TRADE, form=form)
     return dates
 
 def open_df_trade_by_date(date, file_folder=file_folder['trade'], verbose=False):

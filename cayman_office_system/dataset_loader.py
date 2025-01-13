@@ -1,17 +1,21 @@
 from shining_pebbles import scan_files_including_regex, pick_input_date_in_file_name, open_df_in_file_folder_by_regex
+from .path_director import file_folder
 from .dataset_constants import *
+from .sector_hotfix_consts import HOTFIX_DATA_SECTOR
 import pandas as pd
 import os
 import re
 
 
 def get_df_sector_ks():
-    sector_ks = open_df_in_file_folder_by_regex(file_folder=file_folder['sector'], regex='ks_name_sector')
+    sector_ks = open_df_in_file_folder_by_regex(file_folder=file_folder['market'], regex='ks_market')
+    for hotfix_datum in HOTFIX_DATA_SECTOR:
+        sector_ks.loc[hotfix_datum['ticker_bbg']] = hotfix_datum
     sector_ks = sector_ks.rename(columns=MAPPING_SECTOR)
     return sector_ks
 
 def get_df_usdkrw():
-    usdkrw = open_df_in_file_folder_by_regex(file_folder=file_folder['currency'], regex='USDKRW')
+    usdkrw = open_df_in_file_folder_by_regex(file_folder=file_folder['currency'], regex='USDKRW KRWT Curncy')
     usdkrw = usdkrw.rename(columns={'PX_LAST': 'usdkrw'})
     return usdkrw
 
@@ -20,12 +24,29 @@ def get_usdkrw_of_date(date):
     usdkrw = df[df.index <= date].iloc[-1]['usdkrw']
     return usdkrw
 
+def get_df_price_usdlevetf():
+    fld = 'PX_LAST'
+    df = open_df_in_file_folder_by_regex(file_folder=file_folder['bbg'], regex=f'261250 KS Equity-{fld}')
+    df = df.rename(columns={f'{fld}': 'price_last'})
+    return df
+
+def get_df_cap_usdlevetf():
+    fld = 'CUR_MKT_CAP'
+    df = open_df_in_file_folder_by_regex(file_folder=file_folder['bbg'], regex=f'261250 KS Equity-{fld}')
+    df = df.rename(columns={f'{fld}': 'cap(/1e6)'})
+    return df
+
 def open_excel(file_name, file_folder, engine='openpyxl'):
     file_path = os.path.join(file_folder, file_name)
     return pd.read_excel(file_path, engine=engine)
 
 def open_balance_of_month(month, file_folder=file_folder['balance']):
     file_names = scan_files_including_regex(file_folder=file_folder, regex=f'^.*-{month}.xls$')
+    df = open_excel(file_folder=file_folder, file_name=file_names[-1], engine='xlrd')
+    return df
+
+def open_xls_balance(file_folder=file_folder['balance']):
+    file_names = scan_files_including_regex(file_folder=file_folder, regex=f'^dataset-cayman_balance.*.xls$')
     df = open_excel(file_folder=file_folder, file_name=file_names[-1], engine='xlrd')
     return df
 
@@ -56,11 +77,6 @@ def get_data_balance(df):
     dct['date'] = date
     return dct
 
-def scan_files_order(file_folder=file_folder['order']):
-    prefix = FILE_NAME_PREFIX_ORDER
-    file_names = scan_files_including_regex(file_folder=file_folder, regex=prefix)
-    return file_names
-
 def extract_date_in_file_name(file_name):
     match = re.search(r'\b\d{8}\b', file_name)
     if match:
@@ -72,12 +88,6 @@ def get_order_date_in_file_name(file_name, form='%Y-%m-%d'):
     if form == '%Y-%m-%d':
         date = f'{date[:4]}-{date[4:6]}-{date[6:]}' if '-' not in date else date
     return date
-
-def get_dates_of_order(file_folder=file_folder['order'], form='%Y-%m-%d'):
-    file_names = scan_files_order(file_folder=file_folder)
-    dates = [get_order_date_in_file_name(file_name=file_name, form=form) for file_name in file_names]
-    dates = sorted(set(dates))
-    return dates
 
 def open_df_order_by_index(file_folder=file_folder['order'], index=-1):
     prefix = FILE_NAME_PREFIX_ORDER

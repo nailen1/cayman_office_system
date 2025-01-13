@@ -9,6 +9,7 @@ COLUMNS_INFO_ORDER = ['date', 'ticker', 'name_kr', 'name', 'amount', 'price_acqu
 COLUMNS_HOLDINGS = ['ticker', 'name_kr', 'name', 'amount', 'price_last', 'evaluation_krw', 'evaluation_usd', 'sector']
 
 
+
 def append_market_info_to_sheet(sheet):
     sheet['ticker_bbg'] = sheet['ticker'].map(lambda x: get_ticker_bbg_of_ticker(x))
     ks = get_ks_market_info()

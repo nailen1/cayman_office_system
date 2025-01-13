@@ -6,6 +6,12 @@ import calendar
 def get_ticker_bbg_of_ticker(ticker):
     return f"{ticker} KS Equity".replace(' KS KS', ' KS')
 
+map_ticker_to_ticker_bbg = get_ticker_bbg_of_ticker
+
+def get_ticker_from_ticker_bbg(ticker_bbg):
+    return ticker_bbg.replace(' Equity', '')
+
+map_ticker_bbg_to_ticker = get_ticker_from_ticker_bbg
 
 def convert_to_unit(number, currency='KRW', level=None):
     if pd.isna(number) or number == "NaN":
@@ -47,6 +53,9 @@ def convert_to_unit(number, currency='KRW', level=None):
 
 def format_number(number):
     return f"{number:,}"
+
+def format_integer(number):
+    return int(number) if not pd.isna(number) else number
 
 
 def get_last_day_of_month(date_str):
