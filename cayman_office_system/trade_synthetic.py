@@ -4,34 +4,36 @@ from .trades import *
 
 
 class SyntheticTrade:
-    def __init__(self, date=None, ticker=None, type=None, num_share=None, trades_history=None, trade_data=None, **kwargs):
+    def __init__(self, date=None, ticker=None, type=None, num_share=None, trades_history=None, price=None, trade_data=None, **kwargs):
         if isinstance(trade_data, dict):
             self.date = trade_data.get('date')
             self.ticker = trade_data.get('ticker')
             self.type = trade_data.get('type')
             self.num_share = int(trade_data.get('num_share', 0))
             self.trades_history = trade_data.get('trades_history')
+            self.price = trade_data.get('price', None)
         else:
             self.date = date
             self.ticker = ticker
             self.type = type
             self.num_share = int(num_share) if num_share is not None else None
             self.trades_history = trades_history
+            self.price = price
 
         for key, value in kwargs.items():
             if not hasattr(self, key):
                 setattr(self, key, value)
 
         self.df = self.get_df_synthetic_trade()
-        self.cashflow = {'date': self.date, 'cashflow': self.cash_folw}
+        self.trade_flow = {'date': self.date, 'flow': self.flow}
 
 
     def get_df_synthetic_trade(self):
         print(f'| append synthetic trade of {self.type} (date) = ({self.date})')
         if 'Sell' in self.type:
-            dct = compose_data_synthetic_sell_of_date(self.ticker, self.date, self.num_share, self.trades_history)
+            dct = compose_data_synthetic_sell_of_date(ticker=self.ticker, date=self.date, num_shares=self.num_share, trades_history=self.trades_history, price=self.price)
         elif 'Buy' in self.type:
-            dct = compose_data_systhetic_buy_of_date(self.ticker, self.date, self.num_share)
+            dct = compose_data_systhetic_buy_of_date(ticker=self.ticker, date=self.date, num_shares=self.num_share, price=self.price)
         else:
             raise ValueError(f"Invalid trade type: {self.type}. Must be 'Buy' or 'Sell'.")
 
@@ -39,26 +41,26 @@ class SyntheticTrade:
         self.tickers = list(df['ticker'])
         self.names = list(df['name'])
         self.net_amount = df['net_amount'].sum()
-        self.cash_folw = df['cashflow'].sum()
-        print(f'|- cash flow of synthetic trade: {self.cash_folw}')
+        self.flow = df['flow'].sum()
+        print(f'|- cash flow of synthetic trade: {self.flow}')
         return df
 
 
-def compose_data_synthetic_sell_of_date(ticker, date, num_shares=None, trades_history=None):
+def compose_data_synthetic_sell_of_date(ticker, date, num_shares=None, trades_history=None, price=None):
     name = get_ks_equity_info([ticker]).iloc[-1]['name']
     type = 'Sell_synthetic'
     if not num_shares:
         trades_history = trades_history[trades_history['ticker'] == ticker]
         trades_history = trades_history[trades_history['date'] <= date]
         num_shares = trades_history['num_shares'].sum() # 전량 매도로 간주
-    price_of_date = get_price_of_date_by_ticker(date=date, ticker=ticker)
+    price_of_date = get_price_of_date_by_ticker(date=date, ticker=ticker) if price == None else price
     consideration = num_shares * price_of_date
     # print(f'|- consideration: {consideration}')
     commission = 0.0
     net_amount = consideration + commission
     sign = -1 if 'Sell' in type else 1
     delta_shares = sign * num_shares
-    cashflow = -sign * net_amount
+    flow = -sign * net_amount
 
     dct = {
         'date': date,
@@ -71,21 +73,21 @@ def compose_data_synthetic_sell_of_date(ticker, date, num_shares=None, trades_hi
         'commission': commission,
         'net_amount': net_amount,
         'delta_shares': delta_shares,
-        'cashflow': cashflow,
+        'flow': flow,
     }
     return dct
 
-def compose_data_systhetic_buy_of_date(ticker, date, num_shares):
+def compose_data_systhetic_buy_of_date(ticker, date, num_shares, price=None):
     name = get_ks_equity_info([ticker]).iloc[-1]['name']
     type = 'Buy_synthetic'
-    price_of_date = get_price_of_date_by_ticker(date=date, ticker=ticker)
+    price_of_date = get_price_of_date_by_ticker(date=date, ticker=ticker) if price == None else price
     consideration = num_shares * price_of_date
     commission = 0.0
     net_amount = consideration + commission
     sign = -1 if 'Sell' in type else 1
     delta_shares = sign * num_shares
-    cashflow = -sign * net_amount
-
+    flow = -sign * net_amount
+  
     dct = {
         'date': date,
         'name': name,
@@ -97,7 +99,7 @@ def compose_data_systhetic_buy_of_date(ticker, date, num_shares):
         'commission': commission,
         'net_amount': net_amount,
         'delta_shares': delta_shares,
-        'cashflow': cashflow,
+        'flow': flow,
     }
     return dct
 
