@@ -16,7 +16,7 @@ class Trade:
         self.df = self.get_df()
         self.data = self.get_data()
         self.timeseries = self.get_timeseries_of_trade_since_trade()
-        self.cashflow = {'date': self.date, 'cashflow': self.cashflow}
+        self.trade_flow = {'date': self.date, 'flow': self.flow}
 
 
     def set_date_and_index(self, date, index):
@@ -71,13 +71,13 @@ class Trade:
         df = pd.DataFrame(data)
         # df = df.rename(columns={'average_price': 'price_trade_average', 'net_amount': 'net_amount_executed'})
         df['delta_shares'] = df.apply(lambda row: int(row['num_shares']) if row['type'] == 'Buy' else int(-row['num_shares']), axis=1)
-        df['cashflow'] = df.apply(lambda row: -row['net_amount'] if row['type'] == 'Buy' else row['net_amount'], axis=1)
+        df['flow'] = df.apply(lambda row: -row['net_amount'] if row['type'] == 'Buy' else row['net_amount'], axis=1)
         self.tickers = list(df['ticker'])
         self.names = list(df['name'])
         self.net_amount = df['net_amount'].sum()
-        self.cashflow = df['cashflow'].sum()
+        self.flow = df['flow'].sum()
         # self.df = df
-        print(f'|- cash flow of trade: {self.cashflow}')
+        print(f'|- cash flow by trading: {self.flow}')
         return df
     
     def get_data(self):

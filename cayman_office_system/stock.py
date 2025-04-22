@@ -15,7 +15,7 @@ class Stock:
         self.latest = self.get_holding_info()
 
     def set_canonical_df(self, df):
-        cols_of_caninical_stock_data = ['date', 'ticker', 'name', 'type', 'num_shares', 'price_trade', 'amount_trade', 'delta_shares', 'cashflow', 'cashflow_cum',
+        cols_of_caninical_stock_data = ['date', 'ticker', 'name', 'type', 'num_shares', 'price_trade', 'amount_trade', 'delta_shares', 'tradeflow', 'tradeflow_cum',
                                         'num_shares_cum', 'price_average']
         for col in df.columns:
             if col not in cols_of_caninical_stock_data:
@@ -34,7 +34,7 @@ class Stock:
         cols_to_keep = ['date', 'ticker', 'name', 'num_shares_cum', 'price_trade', 'price_average']
         df_nums = df[cols_to_keep].copy()
         df_nums.loc[:, 'total_amount'] = df_nums['num_shares_cum'] * df_nums['price_average']
-        df_nums.loc[:, 'realization'] = df['cashflow'].apply(lambda x: x if x > 0 else 0)
+        df_nums.loc[:, 'realization'] = df['tradeflow'].apply(lambda x: x if x > 0 else 0)
         df_all_dates = pd.DataFrame({'date': get_date_range(start_date_str=df_nums['date'].min(), end_date_str=get_today())})
         timeseries = pd.merge(df_all_dates, df_nums, on='date', how='left').sort_values('date')
         timeseries['realization'] = timeseries['realization'].fillna(0)

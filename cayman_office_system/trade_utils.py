@@ -118,6 +118,9 @@ def get_data_in_transaction(transaction, keys):
 
 def get_df_sellbuy(transaction):
     df = transaction[~transaction['Unnamed: 6'].isna()].dropna(axis=1)
+    # (2025-04-16) single-row sell trade exception, BRIDGE BIOTHERAPEUTICS
+    COLS_TO_KEEP_HOTFIX = ['Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']
+    df = df[COLS_TO_KEEP_HOTFIX]
     df.columns = ['num_shares', 'currency', 'price_executed']
     return df
 

@@ -6,7 +6,7 @@ from .stock import Stock
 from shining_pebbles import get_today, get_date_range
 from .birdeye_connector import get_price_by_ticker
 from .market_information import append_market_info_to_df
-from .trade_synthetic_data import DNDONGA_MERGER
+from .trade_synthetic_data import SYSTHETIC_DATA
 from .trades_synthetic import SyntheticTrades
 
 class Trades:
@@ -39,16 +39,16 @@ class Trades:
     def get_raw(self, synthetic_trades=True):
         dfs = [trade.df for trade in self.trades]
         if synthetic_trades:
-            dfs = dfs + [SyntheticTrades(data_sellbuys=DNDONGA_MERGER).df]        
+            dfs = dfs + [SyntheticTrades(data_sellbuys=SYSTHETIC_DATA).df]        
         df = pd.concat(dfs, axis=0)
         df = df.reset_index(drop=True)
         df = df.sort_values(by='date', ascending=True)
         df_merged = append_market_info_to_df(df)
-        df_merged = df_merged.rename(columns={'name': 'name_in_file', 'name_y': 'name', 'average_price': 'price_trade', 'net_amount': 'amount_trade'})
+        df_merged = df_merged.rename(columns={'name': 'name_in_file', 'name_y': 'name', 'average_price': 'price_trade', 'net_amount': 'amount_trade', 'flow': 'tradeflow'})
         self._raw = df_merged
         # ['date', 'name_x', 'ticker', 'type', 'num_shares', 'average_price',
         #        'consideration', 'commission', 'amount_trade', 'delta_shares',
-        #        'cashflow', 'ticker_bbg', 'name_kr', 'name_y', 'market_index',
+        #        'tradeflow', 'ticker_bbg', 'name_kr', 'name_y', 'market_index',
         #        'sector', 'cap(/1e8)', 'price_last']
         return df_merged
     
@@ -61,16 +61,16 @@ class Trades:
         if not hasattr(self, '_raw'):
             self.get_raw()
         df = self._raw
-        cols_to_keep = ['date', 'ticker', 'name', 'type', 'num_shares', 'price_trade', 'amount_trade', 'delta_shares', 'cashflow']
+        cols_to_keep = ['date', 'ticker', 'name', 'type', 'num_shares', 'price_trade', 'amount_trade', 'delta_shares', 'tradeflow']
         df = df[cols_to_keep]
         self.df = df        
         dct = {}
         for ticker in self.tickers:
             df_ticker = df[df['ticker']==ticker].copy()
             df_ticker = df_ticker.reset_index(drop=True)
-            df_ticker.loc[:,'cashflow_cum'] = df_ticker['cashflow'].cumsum()
+            df_ticker.loc[:,'tradeflow_cum'] = df_ticker['tradeflow'].cumsum()
             df_ticker.loc[:,'num_shares_cum'] = df_ticker['delta_shares'].cumsum()
-            df_ticker.loc[:,'price_average'] = df_ticker.apply(lambda row: round(-row['cashflow_cum']/row['num_shares_cum'],2) if row['num_shares_cum'] != 0 else 0, axis=1)
+            df_ticker.loc[:,'price_average'] = df_ticker.apply(lambda row: round(-row['tradeflow_cum']/row['num_shares_cum'],2) if row['num_shares_cum'] != 0 else 0, axis=1)
             dct[ticker] = df_ticker
         self.dfs = dct
         return df

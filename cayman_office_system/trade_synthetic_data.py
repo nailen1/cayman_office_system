@@ -1,11 +1,11 @@
-SELL_DN = {
+SYNTHETIC_SELL_DN = {
     'date': '2024-10-07',
     'ticker': '007340 KS',
     'type': 'Sell',
     'num_share': 29231,
 }
 
-SELL_DONGATIRE = {
+SYNTHETIC_SELL_DONGATIRE = {
     'date': '2024-10-07',
     'ticker': '282690 KS',
     'type': 'Sell',
@@ -13,7 +13,7 @@ SELL_DONGATIRE = {
     'trades_history': None
 }
 
-BUY_DN = {
+SYNTHETIC_BUY_DN = {
     'date': '2024-10-08',
     'ticker': '007340 KS',
     'type': 'Buy',
@@ -21,8 +21,16 @@ BUY_DN = {
     'trades_history': None
 }
 
-DNDONGA_MERGER = [SELL_DN, SELL_DONGATIRE, BUY_DN]
+BONUS_ISSUE_DONGWON = {
+    'date': '2024-12-30',
+    'ticker': '006040 KS',
+    'type': 'Buy',
+    'num_share': 1900,
+    'trades_history': None,
+    'price': 0
+}
 
+SYSTHETIC_DATA = [SYNTHETIC_SELL_DN, SYNTHETIC_SELL_DONGATIRE, SYNTHETIC_BUY_DN, BONUS_ISSUE_DONGWON]
 
 # EVENT LOG
 
