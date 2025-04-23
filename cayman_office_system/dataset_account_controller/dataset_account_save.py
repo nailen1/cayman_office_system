@@ -1,5 +1,5 @@
-from ..path_director import file_folder
-from ..dataset_loader import open_excel
+from cayman_office_system.path_director import file_folder
+from cayman_office_system.cos_dataset_loader import open_excel
 from .dataset_account_parser import extract_fund_data, extract_timeseries_account, compose_filename_dataset_account
 from canonical_transformer import map_df_to_csv
 from shining_pebbles import scan_files_including_regex

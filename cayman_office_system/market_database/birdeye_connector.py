@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime
-from .dataset_loader import get_df_price_usdlevetf, get_df_cap_usdlevetf
+from .pseudo_database import get_df_price_usdlevetf, get_df_cap_usdlevetf
 
 load_dotenv()
 

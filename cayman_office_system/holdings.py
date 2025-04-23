@@ -1,9 +1,8 @@
-from .trade_parser import *
+import pandas as pd
 from .trades import Trades
 from .timeseries import Timeseries
-from .stock import Stock
-from .finance_utils import *
-from .market_information import get_ks_equity_info, get_mapping_ks_name
+from .finance_utils import map_ticker_to_ticker_bbg, map_ticker_bbg_to_ticker
+from .market_database import get_ks_market_info
 
 class Holdings:
     def __init__(self, trades=None):
@@ -63,7 +62,7 @@ class Holdings:
         if not hasattr(self, 'tickers'):
             self.get_tickers()
         tickers = self.tickers
-        tickers_bbg = [get_ticker_bbg_of_ticker(ticker) for ticker in tickers]
+        tickers_bbg = [map_ticker_to_ticker_bbg(ticker) for ticker in tickers]
         ks = get_ks_market_info()
         df = ks[ks.index.isin(tickers_bbg)].copy()
         df.loc[:, 'ticker'] = df.index.map(map_ticker_bbg_to_ticker)

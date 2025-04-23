@@ -1,6 +1,6 @@
 from shining_pebbles import scan_files_including_regex, open_df_in_file_folder_by_regex
-from ..path_director import file_folder as file_folder_account
-from ..dataset_loader import open_excel
+from cayman_office_system.path_director import file_folder as file_folder_account
+from cayman_office_system.cos_dataset_loader import open_excel
 from .dataset_account_consts import MAPPING_LKEF, MAPPING_DATE_GENESIS
 from .account_hotfix_consts import HOTFIX_DATA_ACCOUNT
 
