@@ -1,7 +1,5 @@
-from .birdeye_connector import get_price_of_date_by_ticker
-from .market_information import get_ks_equity_info
-from .trades import *
-
+from cayman_office_system.market_database import get_price_of_date_by_ticker, get_ks_equity_info
+import pandas as pd
 
 class SyntheticTrade:
     def __init__(self, date=None, ticker=None, type=None, num_share=None, trades_history=None, price=None, trade_data=None, **kwargs):

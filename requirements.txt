@@ -1,0 +1,6 @@
+shining_pebbles>=0.5.5
+canonical_transformer>=0.2.5
+mysql-connector-python>=9.3.0
+pandas
+matplotlib
+python-dotenv

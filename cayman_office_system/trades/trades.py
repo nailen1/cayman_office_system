@@ -1,13 +1,12 @@
 import pandas as pd
-import numpy as np
-from .trade_utils import get_dates_of_trades_in_file_folder
-from .trade_parser import Trade
-from .stock import Stock
-from shining_pebbles import get_today, get_date_range
-from .birdeye_connector import get_price_by_ticker
-from .market_information import append_market_info_to_df
-from .trade_synthetic_data import SYSTHETIC_DATA
+from cayman_office_system.market_database import append_market_info_to_df
+from .trade.trade_utils import (
+    get_dates_of_trades_in_file_folder,
+)
+from .trade import Trade
+from .trade.trade_synthetic_data import SYSTHETIC_DATA
 from .trades_synthetic import SyntheticTrades
+from .stock import Stock
 
 class Trades:
     def __init__(self, start_date=None, end_date=None):
@@ -46,10 +45,6 @@ class Trades:
         df_merged = append_market_info_to_df(df)
         df_merged = df_merged.rename(columns={'name': 'name_in_file', 'name_y': 'name', 'average_price': 'price_trade', 'net_amount': 'amount_trade', 'flow': 'tradeflow'})
         self._raw = df_merged
-        # ['date', 'name_x', 'ticker', 'type', 'num_shares', 'average_price',
-        #        'consideration', 'commission', 'amount_trade', 'delta_shares',
-        #        'tradeflow', 'ticker_bbg', 'name_kr', 'name_y', 'market_index',
-        #        'sector', 'cap(/1e8)', 'price_last']
         return df_merged
     
     def get_tickers(self):
@@ -133,32 +128,3 @@ class Trades:
         df = df[cols_to_keep]
         self.sells = df
         return df
-    
-
-# def plot_stock(df, ticker=None, name=None):
-#     ticker, name = df.iloc[0]['ticker'], df.iloc[0]['name']
-#     fig, ax1 = plt.subplots(figsize=(10, 6))
-
-#     ax1.fill_between(df['date'], df['total_amount'], color='skyblue', alpha=0.4, label='Total Amount', where=np.isfinite(df['total_amount']))    
-#     bars = ax1.bar(df['date'], df['realization'], color='lightcoral', alpha=0.6, label='Realization')
-
-#     for bar in bars:
-#         height = bar.get_height()
-#         if height > 0:  # Only label positive bars
-#             ax1.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2e}', ha='center', va='bottom', color='black', fontsize=10)
-
-#     ax1.plot(df['date'], df['valuation'], color='orange', label='Valuation', linewidth=2)    
-#     ax1.plot(df['date'], df['pl'], color='gray', label='P/L', linewidth=1)
-#     ax1.set_ylabel('KRW', color='black')
-#     plt.xticks(rotation=90, ha='center')
-
-#     ax1.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray', alpha=0.6)
-#     title_suffix = f': {name} ({ticker})' if name and ticker else ''
-#     fig.suptitle(f'Stock Valuation'+title_suffix, fontsize=16, color='black')
-#     ax1.legend(loc='upper left')
-#     plt.tight_layout()
-
-#     plt.show()
-
-#     return None
-

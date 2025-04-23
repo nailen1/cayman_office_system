@@ -1,40 +1,9 @@
 from shining_pebbles import scan_files_including_regex, pick_input_date_in_file_name, open_df_in_file_folder_by_regex
-from .path_director import file_folder
-from .dataset_constants import *
-from .sector_hotfix_consts import HOTFIX_DATA_SECTOR
 import pandas as pd
 import os
 import re
-
-
-def get_df_sector_ks():
-    sector_ks = open_df_in_file_folder_by_regex(file_folder=file_folder['market'], regex='ks_market')
-    for hotfix_datum in HOTFIX_DATA_SECTOR:
-        sector_ks.loc[hotfix_datum['ticker_bbg']] = hotfix_datum
-    sector_ks = sector_ks.rename(columns=MAPPING_SECTOR)
-    return sector_ks
-
-def get_df_usdkrw():
-    usdkrw = open_df_in_file_folder_by_regex(file_folder=file_folder['currency'], regex='USDKRW KRWT Curncy')
-    usdkrw = usdkrw.rename(columns={'PX_LAST': 'usdkrw'})
-    return usdkrw
-
-def get_usdkrw_of_date(date):
-    df = get_df_usdkrw()
-    usdkrw = df[df.index <= date].iloc[-1]['usdkrw']
-    return usdkrw
-
-def get_df_price_usdlevetf():
-    fld = 'PX_LAST'
-    df = open_df_in_file_folder_by_regex(file_folder=file_folder['bbg'], regex=f'261250 KS Equity-{fld}')
-    df = df.rename(columns={f'{fld}': 'price_last'})
-    return df
-
-def get_df_cap_usdlevetf():
-    fld = 'CUR_MKT_CAP'
-    df = open_df_in_file_folder_by_regex(file_folder=file_folder['bbg'], regex=f'261250 KS Equity-{fld}')
-    df = df.rename(columns={f'{fld}': 'cap(/1e6)'})
-    return df
+from cayman_office_system.path_director import file_folder
+from .dataset_constants import FILE_NAME_PREFIX_ORDER, MAPPING_COLUMNS_ORDER, FILE_NAME_PREFIX_HOLDING
 
 def open_excel(file_name, file_folder, engine='openpyxl'):
     file_path = os.path.join(file_folder, file_name)
@@ -83,27 +52,6 @@ def extract_date_in_file_name(file_name):
         return match.group(0)
     return None
 
-def get_order_date_in_file_name(file_name, form='%Y-%m-%d'):
-    date = extract_date_in_file_name(file_name)
-    if form == '%Y-%m-%d':
-        date = f'{date[:4]}-{date[4:6]}-{date[6:]}' if '-' not in date else date
-    return date
-
-def open_df_order_by_index(file_folder=file_folder['order'], index=-1):
-    prefix = FILE_NAME_PREFIX_ORDER
-    file_name = scan_files_including_regex(file_folder=file_folder, regex=prefix)[index]
-    df = open_excel(file_name, file_folder=file_folder)
-    date = get_order_date_in_file_name(file_name)
-    df['date'] = date
-    df = df.set_index('date')
-    print(f'- open: {file_name} in {file_folder}')
-    return df
-
-def open_df_order_latest(file_folder=file_folder['order']):
-    df = open_df_order_by_index(file_folder=file_folder, index=-1)
-    return df
-
-
 def scan_files_including_date_in_file_name_prefix(prefix, date, file_folder):
     date = date.replace('-', '')
     yyyymmdd = date
@@ -138,6 +86,28 @@ def preprocess_df_order(df_order):
     df.columns = [MAPPING_COLUMNS_ORDER[col] for col in df.columns]
     # df = df.set_index('ticker')
     return df
+
+
+def get_order_date_in_file_name(file_name, form='%Y-%m-%d'):
+    date = extract_date_in_file_name(file_name)
+    if form == '%Y-%m-%d':
+        date = f'{date[:4]}-{date[4:6]}-{date[6:]}' if '-' not in date else date
+    return date
+
+def open_df_order_by_index(file_folder=file_folder['order'], index=-1):
+    prefix = FILE_NAME_PREFIX_ORDER
+    file_name = scan_files_including_regex(file_folder=file_folder, regex=prefix)[index]
+    df = open_excel(file_name, file_folder=file_folder)
+    date = get_order_date_in_file_name(file_name)
+    df['date'] = date
+    df = df.set_index('date')
+    print(f'- open: {file_name} in {file_folder}')
+    return df
+
+def open_df_order_latest(file_folder=file_folder['order']):
+    df = open_df_order_by_index(file_folder=file_folder, index=-1)
+    return df
+
 
 def get_df_order_latest(file_folder=file_folder['order']):
     df_order = open_df_order_latest(file_folder=file_folder)

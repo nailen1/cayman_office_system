@@ -1,4 +1,5 @@
-from .trade_synthetic import *
+from .trade import SyntheticTrade
+import pandas as pd
 
 class SyntheticTrades:
     def __init__(self, data_sellbuys):

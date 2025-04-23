@@ -1,9 +1,5 @@
-from shining_pebbles import get_today, get_date_range
-from .path_director import file_folder
-from .dataset_constants import *
-from .dataset_loader import *
-from .dataset_account_controller import get_timeseries_master
-from .maintanence_consts import LKEF_INCEPTION_DATE
+from shining_pebbles import get_today
+from cayman_office_system.dataset_account_controller import get_timeseries_master
 import pandas as pd
 
 class Timeseries:
@@ -80,24 +76,6 @@ class Timeseries:
         REFERENCE_PRICE_UNIT = 1000.0
         INITIAL_SHARES = 0
 
-        # df.loc[df.index[0], 'delta_shares: usd'] = df.loc[df.index[0], 'flow: usd'] / INITIAL_PRICE * REFERENCE_PRICE_UNIT
-        # df.loc[df.index[0], 'shares: usd'] = INITIAL_SHARES + df.loc[df.index[0], 'delta_shares: usd']
-        # df.loc[df.index[0], 'price: usd'] = df.loc[df.index[0], 'nav: usd'] / df.loc[df.index[0], 'shares: usd'] * INITIAL_PRICE
-
-        # for i in range(1, len(df)):
-        #     df.loc[df.index[i], 'delta_shares: usd'] = df.loc[df.index[i], 'flow: usd'] / df.loc[df.index[i-1], 'price: usd'] * REFERENCE_PRICE_UNIT
-        #     df.loc[df.index[i], 'shares: usd'] = df.loc[df.index[i-1], 'shares: usd'] + df.loc[df.index[i], 'delta_shares: usd']
-        #     df.loc[df.index[i], 'price: usd'] = df.loc[df.index[i], 'nav: usd'] / df.loc[df.index[i], 'shares: usd'] * INITIAL_PRICE
-
-        # df.loc[df.index[0], 'delta_shares: krw'] = df.loc[df.index[0], 'flow: krw'] / INITIAL_PRICE * REFERENCE_PRICE_UNIT
-        # df.loc[df.index[0], 'shares: krw'] = INITIAL_SHARES + df.loc[df.index[0], 'delta_shares: krw']
-        # df.loc[df.index[0], 'price: krw'] = df.loc[df.index[0], 'nav: krw'] / df.loc[df.index[0], 'shares: krw'] * INITIAL_PRICE
-
-        # for i in range(1, len(df)):
-        #     df.loc[df.index[i], 'delta_shares: krw'] = df.loc[df.index[i], 'flow: krw'] / df.loc[df.index[i-1], 'price: krw'] * REFERENCE_PRICE_UNIT
-        #     df.loc[df.index[i], 'shares: krw'] = df.loc[df.index[i-1], 'shares: krw'] + df.loc[df.index[i], 'delta_shares: krw']
-        #     df.loc[df.index[i], 'price: krw'] = df.loc[df.index[i], 'nav: krw'] / df.loc[df.index[i], 'shares: krw'] * INITIAL_PRICE
-        
         for suffix in [': usd', ': krw']:
             df.loc[df.index[0], f'delta_shares{suffix}'] = df.loc[df.index[0], f'flow{suffix}'] / INITIAL_PRICE * REFERENCE_PRICE_UNIT
             df.loc[df.index[0], f'shares{suffix}'] = INITIAL_SHARES + df.loc[df.index[0], f'delta_shares{suffix}']
